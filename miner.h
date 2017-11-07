@@ -1010,10 +1010,12 @@ extern int opt_au3_volt;
 extern float opt_rock_freq;
 #endif
 #ifdef USE_GEKKO
-extern char *opt_compac_options;
-extern char *opt_compac_timing;
-//extern float opt_anu_freq;
+extern char *opt_gekko_options;
+extern char *opt_gekko_timing;
+extern float opt_anu_freq;
 extern float opt_compac_freq;
+
+extern float opt_rock_freq;
 #endif
 extern bool opt_worktime;
 #ifdef USE_AVALON

@@ -236,8 +236,8 @@ int opt_au3_volt = 775;
 float opt_rock_freq = 270;
 #endif
 #ifdef USE_GEKKO
-char *opt_compac_options = NULL;
-char *opt_compac_timing = NULL;
+char *opt_gekko_options = NULL;
+char *opt_gekko_timing = NULL;
 float opt_compac_freq = 125;
 
 #endif
@@ -819,14 +819,14 @@ static char *set_int_32_to_63(const char *arg, int *i)
 	return set_int_range(arg, i, 32, 63);
 }
 
-static char *set_int_22_to_75(const char *arg, int *i)
+static char *set_int_22_to_55(const char *arg, int *i)
 {
-	return set_int_range(arg, i, 22, 75);
+	return set_int_range(arg, i, 22, 55);
 }
 
-static char *set_int_42_to_85(const char *arg, int *i)
+static char *set_int_42_to_65(const char *arg, int *i)
 {
-	return set_int_range(arg, i, 42, 85);
+	return set_int_range(arg, i, 42, 62);
 }
 
 static char *set_int_1_to_10(const char *arg, int *i)
@@ -1597,11 +1597,11 @@ static struct opt_table opt_config_table[] = {
 		     opt_hidden),
 #endif
 #ifdef USE_GEKKO
-	OPT_WITH_ARG("--compac-options",
-		     opt_set_charp, NULL, &opt_compac_options,
+	OPT_WITH_ARG("--gekko-options",
+		     opt_set_charp, NULL, &opt_gekko_options,
 		     opt_hidden),
-	OPT_WITH_ARG("--compac-timing",
-		     opt_set_charp, NULL, &opt_compac_timing,
+	OPT_WITH_ARG("--gekko-timing",
+		     opt_set_charp, NULL, &opt_gekko_timing,
 		     opt_hidden),
 #endif
 #if defined(HAVE_MODMINER)
@@ -5132,8 +5132,8 @@ void write_config(FILE *fcfg)
 			     (void *)opt->cb_arg == (void *)set_int_0_to_200 ||
 			     (void *)opt->cb_arg == (void *)set_int_0_to_4 ||
 			     (void *)opt->cb_arg == (void *)set_int_32_to_63 ||
-			     (void *)opt->cb_arg == (void *)set_int_22_to_75 ||
-			     (void *)opt->cb_arg == (void *)set_int_42_to_85)) {
+			     (void *)opt->cb_arg == (void *)set_int_22_to_55 ||
+			     (void *)opt->cb_arg == (void *)set_int_42_to_65)) {
 				fprintf(fcfg, ",\n\"%s\" : \"%d\"", p+2, *(int *)opt->u.arg);
 				continue;
 			}
@@ -6287,7 +6287,10 @@ static void *stratum_rthread(void *userdata)
 				pool_died(pool);
 				if (pool->removed)
 					goto out;
-				cgsleep_ms(5000);
+				if (enabled_pools > 1)
+					cgsleep_ms(30000);
+				else
+					cgsleep_ms(3000);
 			}
 		}
 
@@ -9078,6 +9081,7 @@ static void generic_zero_stats(struct cgpu_info *cgpu)
 #define noop_flush_work noop_reinit_device
 #define noop_update_work noop_reinit_device
 #define noop_queue_full noop_get_stats
+#define noop_zero_stats noop_reinit_device
 #define noop_identify_device noop_reinit_device
 
 /* Fill missing driver drv functions with noops */
@@ -9116,7 +9120,7 @@ void fill_device_drv(struct device_drv *drv)
 	if (!drv->queue_full)
 		drv->queue_full = &noop_queue_full;
 	if (!drv->zero_stats)
-		drv->zero_stats = &generic_zero_stats;
+		drv->zero_stats = &noop_zero_stats;
 	/* If drivers support internal diff they should set a max_diff or
 	 * we will assume they don't and set max to 1. */
 	if (!drv->max_diff)
@@ -9146,7 +9150,7 @@ void null_device_drv(struct device_drv *drv)
 	drv->thread_shutdown = &noop_thread_shutdown;
 	drv->thread_enable = &noop_thread_enable;
 
-	drv->zero_stats = &generic_zero_stats;
+	drv->zero_stats = &noop_zero_stats;
 
 	drv->hash_work = &noop_hash_work;
 
@@ -9154,6 +9158,7 @@ void null_device_drv(struct device_drv *drv)
 	drv->flush_work = &noop_flush_work;
 	drv->update_work = &noop_update_work;
 
+	drv->zero_stats = &noop_zero_stats;
 	drv->max_diff = 1;
 	drv->min_diff = 1;
 }
@@ -9189,6 +9194,19 @@ static void adjust_mostdevs(void)
 
 #ifdef USE_ICARUS
 bool icarus_get_device_id(struct cgpu_info *cgpu)
+{
+	static struct _cgpu_devid_counter *devids = NULL;
+	struct _cgpu_devid_counter *d;
+
+	HASH_FIND_STR(devids, cgpu->drv->name, d);
+	if (d)
+		return (d->lastid + 1);
+	else
+		return 0;
+}
+#endif
+#ifdef USE_GEKKO
+bool gekko_get_device_id(struct cgpu_info *cgpu)
 {
 	static struct _cgpu_devid_counter *devids = NULL;
 	struct _cgpu_devid_counter *d;
