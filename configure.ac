@@ -941,9 +941,9 @@ else
 fi
 
 if test "x$bitmain_soc" = xyes; then
-	echo "  Bitmain.ASICs......: Enabled"
+	echo "  Bitmain.ASICs........: Enabled"
 else
-	echo "  Bitmain.ASICs......: Disabled"
+	echo "  Bitmain.ASICs........: Disabled"
 fi
 
 
