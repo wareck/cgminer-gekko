@@ -33,11 +33,24 @@ unsigned int crc16_table[256] = {
 	0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 };
 
+/* CRC-16/CCITT */
 unsigned short crc16(const unsigned char *buffer, int len)
 {
 	unsigned short crc;
 
 	crc = 0;
+	while(len-- > 0)
+	    crc = crc16_table[((crc >> 8) ^ (*buffer++)) & 0xFF] ^ (crc << 8);
+
+	return crc;
+}
+
+/* CRC-16/CCITT-FALSE */
+unsigned short crc16_false(const unsigned char *buffer, int len)
+{
+	unsigned short crc;
+
+	crc = 0xffff;
 	while(len-- > 0)
 	    crc = crc16_table[((crc >> 8) ^ (*buffer++)) & 0xFF] ^ (crc << 8);
 

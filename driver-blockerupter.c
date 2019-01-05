@@ -15,7 +15,9 @@
 #define O_CLOEXEC 0
 #endif
 #else
+#ifdef WIN32
 #include <windows.h>
+#endif
 #include <io.h>
 #endif
 

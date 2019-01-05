@@ -382,6 +382,7 @@ struct ICARUS_WORK {
 #define ANT_U1_DEFFREQ 200
 #define ANT_U3_DEFFREQ 225
 #define ANT_U3_MAXFREQ 250
+
 struct {
 	float freq;
 	uint16_t hex;
@@ -1190,7 +1191,7 @@ static struct cgpu_info *icarus_detect_one(struct libusb_device *dev, struct usb
 
 	const char golden_nonce[] = "000187a2";
 	const uint32_t golden_nonce_val = 0x000187a2;
-	unsigned char nonce_bin[ICARUS_READ_SIZE];
+	unsigned char nonce_bin[ICARUS_BUF_SIZE];
 	struct ICARUS_WORK workdata;
 	char *nonce_hex;
 	int baud, uninitialised_var(work_division), uninitialised_var(fpga_count);
@@ -1508,7 +1509,7 @@ static struct cgpu_info *rock_detect_one(struct libusb_device *dev, struct usb_f
 
 	const char golden_nonce[] = "000187a2";
 	const uint32_t golden_nonce_val = 0x000187a2;
-	unsigned char nonce_bin[ROCK_READ_SIZE];
+	unsigned char nonce_bin[ICARUS_BUF_SIZE];
 	struct ICARUS_WORK workdata;
 	char *nonce_hex;
 	struct cgpu_info *icarus;

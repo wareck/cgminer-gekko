@@ -31,6 +31,7 @@
 	}
 #elif defined WIN32
 	#include <winsock2.h>
+	#include <windows.h>
 	#include <ws2tcpip.h>
 
 	#define SOCKETTYPE SOCKET
@@ -120,6 +121,7 @@ int ser_number(unsigned char *s, int32_t val);
 unsigned char *ser_string(char *s, int *slen);
 int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start) (void *), void *arg);
 void thr_info_cancel(struct thr_info *thr);
+void cgcond_time(struct timespec *abstime);
 void cgtime(struct timeval *tv);
 void subtime(struct timeval *a, struct timeval *b);
 void addtime(struct timeval *a, struct timeval *b);
@@ -138,8 +140,13 @@ void cgsleep_ms(int ms);
 void cgsleep_us(int64_t us);
 void cgtimer_time(cgtimer_t *ts_start);
 #define cgsleep_prepare_r(ts_start) cgtimer_time(ts_start)
+#ifdef USE_BITMAIN_SOC
 void cgsleep_ms_r(cgtimer_t *ts_start, int ms);
 void cgsleep_us_r(cgtimer_t *ts_start, int64_t us);
+#else
+int cgsleep_ms_r(cgtimer_t *ts_start, int ms);
+int64_t cgsleep_us_r(cgtimer_t *ts_start, int64_t us);
+#endif
 int cgtimer_to_ms(cgtimer_t *cgt);
 void cgtimer_sub(cgtimer_t *a, cgtimer_t *b, cgtimer_t *res);
 double us_tdiff(struct timeval *end, struct timeval *start);
@@ -147,8 +154,8 @@ int ms_tdiff(struct timeval *end, struct timeval *start);
 double tdiff(struct timeval *end, struct timeval *start);
 bool stratum_send(struct pool *pool, char *s, ssize_t len);
 bool sock_full(struct pool *pool);
-void _cgrecalloc(void **ptr, size_t old, size_t new, const char *file, const char *func, const int line);
-#define recalloc(ptr, old, new) _cgrecalloc((void *)&(ptr), old, new, __FILE__, __func__, __LINE__)
+void ckrecalloc(void **ptr, size_t old, size_t new, const char *file, const char *func, const int line);
+#define recalloc(ptr, old, new) ckrecalloc((void *)&(ptr), old, new, __FILE__, __func__, __LINE__)
 char *recv_line(struct pool *pool);
 bool parse_method(struct pool *pool, char *s);
 bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port);
