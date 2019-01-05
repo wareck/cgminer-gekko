@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Con Kolivas
+ * Copyright 2011-2018 Con Kolivas
  * Copyright 2011-2015 Andrew Smith
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
@@ -44,6 +44,7 @@
 #ifndef WIN32
 #include <sys/resource.h>
 #else
+#include <winsock2.h>
 #include <windows.h>
 #endif
 #include <ccan/opt/opt.h>
@@ -81,6 +82,10 @@ char *curly = ":D";
 #include "driver-avalon4.h"
 #endif
 
+#ifdef USE_AVALON7
+#include "driver-avalon7.h"
+#endif
+
 #ifdef USE_AVALON_MINER
 #include "driver-avalon-miner.h"
 #endif
@@ -105,8 +110,22 @@ char *curly = ":D";
 #include "driver-bitfury.h"
 #endif
 
+#ifdef USE_BITFURY16
+#include "driver-bitfury16.h"
+#endif
+
+#ifdef USE_BITMAIN_SOC
+#include <sys/sysinfo.h>
+#include "driver-btm-soc.h"
+#endif
+
+
 #ifdef USE_COINTERRA
 #include "driver-cointerra.h"
+#endif
+
+#ifdef USE_GEKKO
+#include "driver-gekko.h"
 #endif
 
 #ifdef USE_HASHFAST
@@ -118,10 +137,6 @@ char *curly = ":D";
 #endif
 
 #if defined(USE_BITFORCE) || defined(USE_ICARUS) || defined(USE_AVALON) || defined(USE_AVALON2) || defined(USE_MODMINER)
-#	define USE_FPGA
-#endif
-
-#ifdef USE_GEKKO
 #	define USE_FPGA
 #endif
 
@@ -160,6 +175,7 @@ enum benchwork {
 static char *opt_btc_address;
 static char *opt_btc_sig;
 #endif
+struct pool *opt_btcd;
 static char *opt_benchfile;
 static bool opt_benchfile_display;
 static FILE *benchfile_in;
@@ -173,12 +189,13 @@ bool opt_quiet;
 bool opt_realquiet;
 bool opt_loginput;
 bool opt_compact;
+bool opt_decode;
 const int opt_cutofftemp = 95;
 int opt_log_interval = 5;
 static const int max_queue = 1;
 const int max_scantime = 60;
 const int max_expiry = 600;
-unsigned long long global_hashrate;
+uint64_t global_hashrate;
 unsigned long global_quota_gcd = 1;
 time_t last_getwork;
 int opt_pool_fallback = 120;
@@ -235,12 +252,6 @@ float opt_au3_freq = 225;
 int opt_au3_volt = 775;
 float opt_rock_freq = 270;
 #endif
-#ifdef USE_GEKKO
-char *opt_gekko_options = NULL;
-char *opt_gekko_timing = NULL;
-float opt_compac_freq = 125;
-
-#endif
 bool opt_worktime;
 #ifdef USE_AVALON
 char *opt_avalon_options;
@@ -258,12 +269,34 @@ static char *opt_set_avalon4_fan;
 static char *opt_set_avalon4_voltage;
 static char *opt_set_avalon4_freq;
 #endif
+#ifdef USE_AVALON7
+static char *opt_set_avalon7_fan;
+static char *opt_set_avalon7_voltage;
+static char *opt_set_avalon7_voltage_level;
+static char *opt_set_avalon7_voltage_offset;
+static char *opt_set_avalon7_freq;
+#endif
 #ifdef USE_AVALON_MINER
 static char *opt_set_avalonm_voltage;
 static char *opt_set_avalonm_freq;
 #endif
 #ifdef USE_BLOCKERUPTER
 int opt_bet_clk = 0;
+#endif
+#ifdef USE_GEKKO
+bool opt_gekko_boost = 0;
+bool opt_gekko_gsc_detect = 0;
+bool opt_gekko_gsd_detect = 0;
+bool opt_gekko_gse_detect = 0;
+bool opt_gekko_gsh_detect = 0;
+float opt_gekko_gsc_freq = 150;
+float opt_gekko_gsd_freq = 100;
+float opt_gekko_gse_freq = 150;
+int opt_gekko_gsh_freq = 100;
+int opt_gekko_gsh_vcore = 400;
+int opt_gekko_start_freq = 100;
+int opt_gekko_step_freq = 25;
+int opt_gekko_step_delay = 15;
 #endif
 #ifdef USE_HASHRATIO
 #include "driver-hashratio.h"
@@ -278,6 +311,23 @@ char *opt_drillbit_auto = NULL;
 char *opt_bab_options = NULL;
 #ifdef USE_BITMINE_A1
 char *opt_bitmine_a1_options = NULL;
+#endif
+#ifdef USE_DRAGONMINT_T1
+#include "dragonmint_t1.h"
+char *opt_dragonmint_t1_options = NULL;
+int opt_T1Pll[MCOMPAT_CONFIG_MAX_CHAIN_NUM] = {
+	DEFAULT_PLL, DEFAULT_PLL, DEFAULT_PLL, DEFAULT_PLL, 
+	DEFAULT_PLL, DEFAULT_PLL, DEFAULT_PLL, DEFAULT_PLL
+};
+int opt_T1Vol[MCOMPAT_CONFIG_MAX_CHAIN_NUM] = {
+	DEFAULT_VOLT, DEFAULT_VOLT, DEFAULT_VOLT, DEFAULT_VOLT,
+	DEFAULT_VOLT, DEFAULT_VOLT, DEFAULT_VOLT, DEFAULT_VOLT
+};
+int opt_T1VID[MCOMPAT_CONFIG_MAX_CHAIN_NUM] = {};
+bool opt_T1auto = true;
+bool opt_T1_efficient;
+bool opt_T1_performance;
+int opt_T1_target = 100;
 #endif
 #if defined(USE_ANT_S1) || defined(USE_ANT_S2)
 char *opt_bitmain_options;
@@ -324,10 +374,13 @@ bool opt_usb_list_all;
 cgsem_t usb_resource_sem;
 static pthread_t usb_poll_thread;
 static bool usb_polling;
+static bool polling_usb;
+static bool usb_reinit;
 #endif
 
 char *opt_kernel_path;
 char *cgminer_path;
+bool opt_gen_stratum_work;
 
 #if defined(USE_BITFORCE)
 bool opt_bfl_noncerange;
@@ -380,6 +433,24 @@ pthread_cond_t gws_cond;
 double rolling1, rolling5, rolling15;
 double total_rolling;
 double total_mhashes_done;
+
+#ifdef USE_BITMAIN_SOC
+char *opt_version_path = NULL;
+char displayed_hash_rate[16] = {0};
+char nonce_num10_string[NONCE_BUFF];
+char nonce_num30_string[NONCE_BUFF];
+char nonce_num60_string[NONCE_BUFF];
+char g_miner_version[256] = {0};
+char g_miner_compiletime[256] = {0};
+char g_miner_type[256] = {0};
+
+double new_total_mhashes_done;
+double new_total_secs = 1.0;
+// only used for total_secs, because we need use system info time, instead of real data time.
+time_t total_tv_start_sys;
+time_t total_tv_end_sys;
+#endif
+
 static struct timeval total_tv_start, total_tv_end;
 static struct timeval restart_tv_start, update_tv_start;
 

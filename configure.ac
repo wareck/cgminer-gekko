@@ -1,8 +1,8 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
-m4_define([v_min], [9])
-m4_define([v_mic], [2])
+m4_define([v_min], [11])
+m4_define([v_mic], [1-gsx])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_ver], [v_maj.v_min.v_mic])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
@@ -64,6 +64,7 @@ AC_FUNC_ALLOCA
 
 have_win32=false
 PTHREAD_FLAGS="-lpthread"
+LIBZ_LIBS="-lz"
 DLOPEN_FLAGS="-ldl"
 WS2_LIBS=""
 MM_LIBS=""
@@ -82,6 +83,9 @@ case $target in
     ;;
 esac
 
+#CFLAGS="$CFLAGS -Wimplicit-fallthrough=0"
+#^ causes problem on gcc 4.9 - pass in from CFLAG if needed
+
 case $target in
   *-*-linux-gnu*)
     have_linux=true
@@ -93,7 +97,7 @@ case $target in
     WS2_LIBS="-lws2_32"
     MM_LIBS="-lwinmm"
     RT_LIBS=""
-    AC_DEFINE([_WIN32_WINNT], [0x0501], "WinNT version for XP+ support")
+    #AC_DEFINE([_WIN32_WINNT], [0x0501], "WinNT version for XP+ support")
     ;;
   powerpc-*-darwin*)
     have_darwin=true
@@ -208,6 +212,17 @@ if test "x$avalon4" = xyes; then
 fi
 AM_CONDITIONAL([HAS_AVALON4], [test x$avalon4 = xyes])
 
+avalon7="no"
+
+AC_ARG_ENABLE([avalon7],
+	[AC_HELP_STRING([--enable-avalon7],[Compile support for Avalon7 (default disabled)])],
+	[avalon7=$enableval]
+	)
+if test "x$avalon7" = xyes; then
+	AC_DEFINE([USE_AVALON7], [1], [Defined to 1 if Avalon7 support is wanted])
+fi
+AM_CONDITIONAL([HAS_AVALON7], [test x$avalon7 = xyes])
+
 avalon_miner="no"
 
 AC_ARG_ENABLE([avalon_miner],
@@ -272,6 +287,67 @@ fi
 AM_CONDITIONAL([HAS_BITFURY], [test x$bitfury = xyes])
 
 
+bitfury16="no"
+
+AC_ARG_ENABLE([bitfury16],
+	[AC_HELP_STRING([--enable-bitfury16],[Compile support for BitFury 16nm ASICs STANDALONE(default disabled)])],
+	[bitfury16=$enableval]
+	)
+if test "x$bitfury16" = xyes; then
+	AC_DEFINE([USE_BITFURY16], [1], [Defined to 1 if BitFury 16nm ASIC support is wanted])
+	drivercount=x$drivercount
+	standalone="yes"
+fi
+AM_CONDITIONAL([HAS_BITFURY16], [test x$bitfury16 = xyes])
+
+bitmain_soc="no"
+bitmain_R4="no"
+bitmain_S9="no"
+bitmain_T9="no"
+bitmain_T9P="no"
+
+AC_ARG_ENABLE([bitmain_soc],
+	[AC_HELP_STRING([--enable-bitmain_soc],[Compile support for Bitmain ASICs STANDALONE(default disabled)])],
+	[bitmain_soc=$enableval]
+	)
+AC_ARG_ENABLE([bitmain_R4],
+	[AC_HELP_STRING([--enable-bitmain_R4],[Compile support for Bitmain R4])],
+	[bitmain_R4=$enableval]
+	)
+AC_ARG_ENABLE([bitmain_S9],
+	[AC_HELP_STRING([--enable-bitmain_S9],[Compile support for Bitmain S9])],
+	[bitmain_S9=$enableval]
+	)
+AC_ARG_ENABLE([bitmain_T9],
+	[AC_HELP_STRING([--enable-bitmain_T9],[Compile support for Bitmain T9])],
+	[bitmain_T9=$enableval]
+	)
+AC_ARG_ENABLE([bitmain_T9P],
+	[AC_HELP_STRING([--enable-bitmain_T9P],[Compile support for Bitmain T9+])],
+	[bitmain_T9P=$enableval]
+	)
+if test "x$bitmain_soc" = xyes; then
+	AC_DEFINE([USE_BITMAIN_SOC], [1], [Defined to 1 if Bitmain ASICs support is wanted])
+    if test "x$bitmain_R4" = xyes; then
+        AC_DEFINE([R4], [1], [Defined to 1 for R4])
+    fi
+    if test "x$bitmain_S9" = xyes; then
+        AC_DEFINE([S9_63], [1], [Defined to 1 for S9])
+    fi
+    if test "x$bitmain_T9" = xyes; then
+        AC_DEFINE([S9_PLUS], [1], [Defined to 1 for T9])
+    fi
+    if test "x$bitmain_T9P" = xyes; then
+        AC_DEFINE([T9_18], [1], [Defined to 1 for T9+])
+    fi
+    if test "x$bitmain_R4$bitmain_S9$bitmain_T9$bitmain_T9P" = xnononono; then
+        AC_DEFINE([S9_63], [1], [Defined to 1 for default])
+    fi
+	drivercount=x$drivercount
+	standalone="yes"
+fi
+AM_CONDITIONAL([HAS_BITMAIN_SOC], [test x$bitmain_soc = xyes])
+
 bitmine_A1="no"
 
 AC_ARG_ENABLE([bitmine_A1],
@@ -299,6 +375,19 @@ fi
 AM_CONDITIONAL([HAS_BLOCKERUPTER], [test x$blockerupter = xyes])
 
 
+gekko="no"
+
+AC_ARG_ENABLE([gekko],
+	[AC_HELP_STRING([--enable-gekko],[Compile support for GekkoScience (default disabled)])],
+	[gekko=$enableval]
+	)
+if test "x$gekko" = xyes; then
+	AC_DEFINE([USE_GEKKO], [1], [Defined to 1 if GekkoScience support is wanted])
+	AC_DEFINE([USE_VMASK], [1], [Defined to 1 if version mask rolling is wanted])
+	drivercount=x$drivercount
+fi
+AM_CONDITIONAL([HAS_GEKKO], [test x$gekko = xyes])
+
 cointerra="no"
 
 AC_ARG_ENABLE([cointerra],
@@ -310,6 +399,21 @@ if test "x$cointerra" = xyes; then
 	drivercount=x$drivercount
 fi
 AM_CONDITIONAL([HAS_COINTERRA], [test x$cointerra = xyes])
+
+
+dragonmint_t1="no"
+
+AC_ARG_ENABLE([dragonmint_t1],
+	[AC_HELP_STRING([--enable-dragonmint_t1],[Compile support for Dragonmint T1 ASICs STANDALONE(default disabled)])],
+	[dragonmint_t1=$enableval]
+	)
+if test "x$dragonmint_t1" = xyes; then
+	AC_DEFINE([USE_DRAGONMINT_T1], [1], [Defined to 1 if Dragonmint T1 support is wanted])
+	AC_DEFINE([USE_VMASK], [1], [Defined to 1 if version mask rolling is wanted])
+	drivercount=x$drivercount
+	standalone="yes"
+fi
+AM_CONDITIONAL([HAS_DRAGONMINT_T1], [test x$dragonmint_t1 = xyes])
 
 
 drillbit="no"
@@ -363,17 +467,6 @@ if test "x$icarus" = xyes; then
 fi
 AM_CONDITIONAL([HAS_ICARUS], [test x$icarus = xyes])
 
-gekko="no"
-
-AC_ARG_ENABLE([gekko],
-	[AC_HELP_STRING([--enable-gekko],[Compile support for Gekko (default disabled)])],
-	[gekko=$enableval]
-	)
-if test "x$gekko" = xyes; then
-	AC_DEFINE([USE_GEKKO], [1], [Defined to 1 if Gekko support is wanted])
-	drivercount=x$drivercount
-fi
-AM_CONDITIONAL([HAS_GEKKO], [test x$gekko = xyes])
 
 klondike="no"
 
@@ -477,7 +570,7 @@ AC_ARG_WITH([curses],
 if test "x$curses" = "xno"; then
 	cursesmsg='User specified --without-curses. TUI support DISABLED'
 else
-	AC_SEARCH_LIBS(addstr, ncurses pdcurses, [
+	AC_SEARCH_LIBS(addstr, pdcurses ncurses pdcurses, [
 		curses=yes
 		cursesmsg="FOUND: ${ac_cv_search_addstr}"
 		AC_DEFINE([HAVE_CURSES], [1], [Defined to 1 if curses TUI support is wanted])
@@ -494,7 +587,7 @@ fi
 
 
 #Add a new device to this list if it needs libusb, along with a no on the end.
-if test x$avalon$avalon2$avalon4$avalon_miner$bitforce$bitfury$blockerupter$modminer$bflsc$icarus$hashfast$hashratio$klondike$drillbit$cointerra$ants1$ants3$gekko != xnononononononononononononononononono; then
+if test x$avalon$avalon2$avalon4$avalon7$avalon_miner$bitforce$bitfury$blockerupter$gekko$modminer$bflsc$icarus$hashfast$hashratio$klondike$drillbit$cointerra$ants1$ants3 != xnonononononononononononononononononono; then
 	want_usbutils=true
 else
 	want_usbutils=false
@@ -506,7 +599,7 @@ else
 	want_libbitfury=false
 fi
 
-if test x$avalon2$avalon4$avalon_miner$hashratio != xnononono; then
+if test x$avalon2$avalon4$avalon7$avalon_miner$gekko$hashratio != xnononononono; then
 	want_crc16=true
 else
 	want_crc16=false
@@ -514,78 +607,51 @@ fi
 
 AM_CONDITIONAL([NEED_FPGAUTILS], [test x$modminer != xno])
 AM_CONDITIONAL([WANT_USBUTILS], [test x$want_usbutils != xfalse])
+AM_CONDITIONAL([NEED_LIBZ], [test x$bitmain_soc != xno])
 AM_CONDITIONAL([WANT_LIBBITFURY], [test x$want_libbitfury != xfalse])
 AM_CONDITIONAL([HAVE_CURSES], [test x$curses = xyes])
 AM_CONDITIONAL([HAVE_WINDOWS], [test x$have_win32 = xtrue])
 AM_CONDITIONAL([HAVE_x86_64], [test x$have_x86_64 = xtrue])
 AM_CONDITIONAL([WANT_CRC16], [test x$want_crc16 != xfalse])
+AM_CONDITIONAL([NEED_I2C_CONTEXT], [test x$avalon4$avalon7 != xnono])
 
 if test "x$want_usbutils" != xfalse; then
 	dlibusb="no"
 	AC_DEFINE([USE_USBUTILS], [1], [Defined to 1 if usbutils support required])
-	AC_ARG_WITH([system-libusb],
-		[AC_HELP_STRING([--with-system-libusb],[NOT RECOMMENDED! Compile against dynamic system libusb. (Default use included static libusb)])],
-		[dlibusb=$withval]
-	)
-
-	if test "x$dlibusb" != xno; then
-		case $target in
-			*-*-freebsd*)
-				LIBUSB_LIBS="-lusb"
-				LIBUSB_CFLAGS=""
-				AC_DEFINE(HAVE_LIBUSB, 1, [Define if you have libusb-1.0])
-				;;
-			*)
-				PKG_CHECK_MODULES(LIBUSB, libusb-1.0, [AC_DEFINE(HAVE_LIBUSB, 1, [Define if you have libusb-1.0])], [AC_MSG_ERROR([Could not find usb library - please install libusb-1.0])])
-				;;
-		esac
-	else
-		AC_CONFIG_SUBDIRS([compat/libusb-1.0])
-		LIBUSB_LIBS="compat/libusb-1.0/libusb/.libs/libusb-1.0.a"
-		if test "x$have_linux" = "xtrue"; then
-			AC_ARG_ENABLE([udev],
-				[AC_HELP_STRING([--disable-udev],[Disable building libusb with udev])],
-				[udev=$enableval]
-				)
-
-			if test "x$udev" != xno; then
-				LIBUSB_LIBS+=" -ludev"
-			fi
-		fi
-		if test "x$have_darwin" = "xtrue"; then
-			LIBUSB_LIBS+=" -lobjc"
-			LDFLAGS+=" -framework CoreFoundation -framework IOKit"
-		fi
-	fi
+	case $target in
+		*-*-freebsd*)
+			LIBUSB_LIBS="-lusb"
+			LIBUSB_CFLAGS=""
+			AC_DEFINE(HAVE_LIBUSB, 1, [Define if you have libusb-1.0])
+			;;
+		*)
+			PKG_CHECK_MODULES(LIBUSB, libusb-1.0, [AC_DEFINE(HAVE_LIBUSB, 1, [Define if you have libusb-1.0])], [AC_MSG_ERROR([Could not find usb library - please install libusb-1.0])])
+			;;
+	esac
 else
 	LIBUSB_LIBS=""
 fi
 
-AM_CONDITIONAL([WANT_STATIC_LIBUSB], [test x$dlibusb = xno])
+djansson="yes"
+case $target in
+	*-*-freebsd*)
+		JANSSON_LIBS="-ljansson"
+		JANSSON_CFLAGS=""
+		AC_DEFINE(HAVE_JANSSON, 1, [Define if you have jansson >= 2.6])
+		;;
+	*)
+		PKG_CHECK_MODULES(JANSSON, jansson >= 2.6, [AC_DEFINE(HAVE_JANSSON, 1, [Define if you have jansson >= 2.6])], [djansson="no"])
+		;;
+esac
 
-djansson="no"
-AC_ARG_WITH([system-jansson],
-	[AC_HELP_STRING([--with-system-jansson],[NOT RECOMMENDED! Compile against dynamic system jansson. (Default use included static jansson)])],
-	[djansson=$withval]
-)
-
-if test "x$djansson" != xno; then
-	case $target in
-		*-*-freebsd*)
-			JANSSON_LIBS="-ljansson"
-			JANSSON_CFLAGS=""
-			AC_DEFINE(HAVE_JANSSON, 1, [Define if you have jansson >= 2.6])
-			;;
-		*)
-			PKG_CHECK_MODULES(JANSSON, jansson >= 2.6, [AC_DEFINE(HAVE_JANSSON, 1, [Define if you have jansson >= 2.6])], [AC_MSG_ERROR([Could not find jansson library - please install jansson >= 2.6])])
-			;;
-	esac
-else
-	AC_CONFIG_SUBDIRS([compat/jansson-2.6])
-	JANSSON_LIBS="compat/jansson-2.6/src/.libs/libjansson.a"
+if test "x$djansson" = xno; then
+	AC_CONFIG_SUBDIRS([compat/jansson-2.9])
+	JANSSON_LIBS="compat/jansson-2.9/src/.libs/libjansson.a"
 fi
 
 AM_CONDITIONAL([WANT_STATIC_JANSSON], [test x$djansson = xno])
+
+AC_CHECK_HEADERS([uthash.h])
 
 PKG_PROG_PKG_CONFIG()
 
@@ -607,6 +673,7 @@ AC_ARG_ENABLE([libcurl],
 	[libcurl=$enableval]
 	)
 
+static_curl="no"
 if test "x$libcurl" != xno; then
 	if test "x$have_win32" != xtrue; then
 		PKG_CHECK_MODULES([LIBCURL], [libcurl >= 7.25.0], [AC_DEFINE([CURL_HAS_KEEPALIVE], [1], [Defined if version of curl supports keepalive.])],
@@ -614,12 +681,14 @@ if test "x$libcurl" != xno; then
 	else
 		PKG_CHECK_MODULES([LIBCURL], [libcurl >= 7.25.0], ,[AC_MSG_ERROR([Missing required libcurl dev >= 7.25.0])])
 		AC_DEFINE([CURL_HAS_KEEPALIVE], [1])
+		static_curl="yes"
 	fi
 	AC_DEFINE([HAVE_LIBCURL], [1], [Defined to 1 if libcurl support built in])
 else
 	LIBCURL_LIBS=""
 fi
 AC_SUBST(LIBCURL_LIBS)
+AM_CONDITIONAL([STATIC_CURL], [test x$static_curl = xyes])
 
 libsystemd="no"
 
@@ -686,6 +755,7 @@ fi
 AC_DEFINE_UNQUOTED([CGMINER_PREFIX], ["$prefix/bin"], [Path to cgminer install])
 
 AC_SUBST(JANSSON_LIBS)
+AC_SUBST(LIBZ_LIBS)
 AC_SUBST(PTHREAD_FLAGS)
 AC_SUBST(DLOPEN_FLAGS)
 AC_SUBST(PTHREAD_LIBS)
@@ -732,6 +802,12 @@ echo "  curses.TUI...........: $cursesmsg"
 
 
 echo
+if test "x$dragonmint_t1" = xyes; then
+	echo "  DragonMint.T1.Halong.: Enabled"
+else
+        echo "  DragonMint.T1.Halong.: Disabled"
+fi
+
 if test "x$ants1" = xyes; then
 	echo "  Antminer.S1.Bitmain..: Enabled"
 else
@@ -766,6 +842,12 @@ if test "x$avalon4" = xyes; then
 	echo "  Avalon4.ASICs........: Enabled"
 else
 	echo "  Avalon4.ASICs........: Disabled"
+fi
+
+if test "x$avalon7" = xyes; then
+	echo "  Avalon7.ASICs........: Enabled"
+else
+	echo "  Avalon7.ASICs........: Disabled"
 fi
 
 if test "x$avalon_miner" = xyes; then
@@ -804,10 +886,29 @@ else
 	echo "  BitFury.ASICs........: Disabled"
 fi
 
+if test "x$bitfury16" = xyes; then
+	echo "  BitFury16.ASICs......: Enabled"
+else
+	echo "  BitFury16.ASICs......: Disabled"
+fi
+
+if test "x$bitmain_soc" = xyes; then
+	echo "  Bitmain.ASICs........: Enabled"
+else
+	echo "  Bitmain.ASICs........: Disabled"
+fi
+
+
 if test "x$blockerupter" = xyes; then
 	echo "  BlockErupter.ASICs...: Enabled"
 else
 	echo "  BlockErupter.ASICs...: Disabled"
+fi
+
+if test "x$gekko" = xyes; then
+	echo "  GekkoScience.ASICs...: Enabled"
+else
+	echo "  GekkoScience.ASICs...: Disabled"
 fi
 
 if test "x$cointerra" = xyes; then
@@ -829,11 +930,16 @@ else
 	echo "  Spond-sp30.ASICs.....: Disabled"
 fi
 
-
 if test "x$bitmine_A1" = xyes; then
 	echo "  Bitmine-A1.ASICs.....: Enabled"
 else
 	echo "  Bitmine-A1.ASICs.....: Disabled"
+fi
+
+if test "x$dragonmint_t1" = xyes; then
+	echo "  Dragonmint.T1.ASICs..: Enabled"
+else
+	echo "  Dragonmint.T1.ASICs..: Disabled"
 fi
 
 if test "x$drillbit" = xyes; then
@@ -860,12 +966,6 @@ else
 	echo "  Icarus.ASICs/FPGAs...: Disabled"
 fi
 
-if test "x$gekko" = xyes; then
-	echo "  Gekko.ASICs..........: Enabled"
-else
-	echo "  Gekko.ASICs..........: Disabled"
-fi
-
 if test "x$klondike" = xyes; then
 	echo "  Klondike.ASICs.......: Enabled"
 else
@@ -885,7 +985,7 @@ else
 fi
 
 #Add any new device to this, along with a no on the end of the test
-if test "x$avalon$avalon2$avalon4$avalon_miner$bab$bflsc$bitforce$bitfury$blockerupter$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$gekko" = xnonononononononononononononononononononononononono; then
+if test "x$avalon$avalon2$avalon4$avalon7$avalon_miner$bab$bflsc$bitforce$bitfury$bitfury16$bitmain_soc$gekko$blockerupter$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$dragonmint_t1" = xnonononononononnoonononononononononononononononononononono; then
 	echo
 	AC_MSG_ERROR([No mining devices configured in])
 	echo
@@ -904,7 +1004,7 @@ echo "Compilation............: make (or gmake)"
 echo "  CPPFLAGS.............: $CPPFLAGS"
 echo "  CFLAGS...............: $CFLAGS"
 echo "  LDFLAGS..............: $LDFLAGS $PTHREAD_FLAGS"
-echo "  LDADD................: $DLOPEN_FLAGS $LIBCURL_LIBS $LIBSYSTEMD_LIBS $JANSSON_LIBS $PTHREAD_LIBS $NCURSES_LIBS $PDCURSES_LIBS $WS2_LIBS $MATH_LIBS $LIBUSB_LIBS $RT_LIBS"
+echo "  LDADD................: $DLOPEN_FLAGS $LIBCURL_LIBS $LIBSYSTEMD_LIBS $JANSSON_LIBS $LIBZ_LIBS $PTHREAD_LIBS $NCURSES_LIBS $PDCURSES_LIBS $WS2_LIBS $MATH_LIBS $LIBUSB_LIBS $RT_LIBS"
 echo
 echo "Installation...........: make install (as root if needed, with 'su' or 'sudo')"
 echo "  prefix...............: $prefix"
