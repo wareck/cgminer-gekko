@@ -30,13 +30,14 @@ to build this specific code on linux:
 
 ```
   --gekko-compac-freq <clock>   Chip clock speed (MHz) default is 200 Mhz
-  --gekko-2pac-freq <clock> Chip clok speed (Mhz) default is 150 Mhz  
+  --gekko-2pac-freq <clock> Chip clok speed (Mhz) default is 150 Mhz 
+  --suggest-diff <value> Limit diff for starting mine default is 32
 ```
 
 ### Command line ###
 
 ```
- ./cgminer -o pool_url -u username -p password --gekko-compac-freq 200 --gekko-2pac-freq 150 --suggest-diff 32
+ ./cgminer -o pool_url -u username -p password --gekko-compac-freq 200 --gekko-2pac-freq 150 
 ```
 
 For windows users, you can donwload the release zip file
