@@ -13,7 +13,10 @@
 
 #include "util.h"
 #include "i2c-context.h"
+
+#ifdef WIN32
 #include <windows.h>
+#endif
 
 #ifdef USE_AVALON4
 
