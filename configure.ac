@@ -2,7 +2,7 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
 m4_define([v_min], [11])
-m4_define([v_mic], [1-gsx])
+m4_define([v_mic], [1-sx])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_ver], [v_maj.v_min.v_mic])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
@@ -630,7 +630,7 @@ if test "x$want_usbutils" != xfalse; then
 	dlibusb="no"
 	AC_DEFINE([USE_USBUTILS], [1], [Defined to 1 if usbutils support required])
 	AC_ARG_WITH([system-libusb],
-		[AC_HELP_STRING([--with-system-libusb],[NOT RECOMMENDED! Compile against dynamic system libusb. (Default use included static libusb)])],
+		[AC_HELP_STRING([--with-system-libusb],[Not recommended! Compile against dynamic system libusb. (Default use included static libusb)])],
 		[dlibusb=$withval]
 	)
 
@@ -671,7 +671,7 @@ AM_CONDITIONAL([WANT_STATIC_LIBUSB], [test x$dlibusb = xno])
 
 djansson="no"
 AC_ARG_WITH([system-jansson],
-	[AC_HELP_STRING([--with-system-jansson],[NOT RECOMMENDED! Compile against dynamic system jansson. (Default use included static jansson)])],
+	[AC_HELP_STRING([--with-system-jansson],[Not Recommended! Compile against dynamic system jansson. (Default use included static jansson)])],
 	[djansson=$withval]
 )
 
