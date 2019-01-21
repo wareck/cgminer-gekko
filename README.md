@@ -25,6 +25,8 @@ to build this specific code on linux:
 	sudo apt-get update
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
 	libjansson-dev libncurses5-dev
+	sudo usermod -a -G dialout,plugdev $USER
+	sudo cp 01-cgminer.rules /etc/udev/rules.d/
 	CFLAGS="-O2 -march=native" ./autogen.sh
 	./configure --enable-gekko
 	make
