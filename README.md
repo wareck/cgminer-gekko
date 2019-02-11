@@ -22,9 +22,11 @@ I allows working with icarus miner and gekko on same rig.
 
 to build this specific code on linux:
 
-	sudo apt-get update
+	sudo apt-get update -y
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
-	libjansson-dev libncurses5-dev
+	libjansson-dev libncurses5-dev -y
+	git clone https://github.com/wareck/cgminer-gekko.git
+	cd cgminer-gekko
 	sudo usermod -a -G dialout,plugdev $USER
 	sudo cp 01-cgminer.rules /etc/udev/rules.d/
 	CFLAGS="-O2 -march=native" ./autogen.sh
