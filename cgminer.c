@@ -295,6 +295,7 @@ static char *opt_set_avalonm_freq;
 int opt_bet_clk = 0;
 #endif
 #ifdef USE_GEKKO
+char *opt_gekko_serial = NULL;
 bool opt_gekko_boost = 0;
 bool opt_gekko_gsc_detect = 0;
 bool opt_gekko_gsd_detect = 0;
@@ -1921,6 +1922,9 @@ static struct opt_table opt_config_table[] = {
                      "Set Block Erupter clock"),
 #endif
 #ifdef USE_GEKKO
+	OPT_WITH_ARG("--gekko-serial",
+			 opt_set_charp, NULL, &opt_gekko_serial,
+			 "Detect GekkoScience Device by Serial Number"),
 	OPT_WITHOUT_ARG("--gekko-compac-detect",
 			 opt_set_bool, &opt_gekko_gsc_detect,
 			 "Detect GekkoScience Compac BM1384"),

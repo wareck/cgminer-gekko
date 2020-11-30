@@ -1603,7 +1603,7 @@ static struct cgpu_info *rock_detect_one(struct libusb_device *dev, struct usb_f
 				break;
 #endif
 			case RM_PRODUCT_RBOX:
-				newname = "RKM"; // R-Box
+				newname = "LIN"; // R-Box
 				info->rmdev.product_id = ROCKMINER_RBOX;
 				info->rmdev.chip_max = 4;
 				info->rmdev.min_frq = 200;
