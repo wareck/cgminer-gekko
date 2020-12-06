@@ -44,7 +44,7 @@
 #include "usbutils.h"
 
 // The serial I/O speed - Linux uses a define 'B115200' in bits/termios.h
-#define GEKKO_IO_SPEED 115200
+//#define GEKKO_IO_SPEED 115200
 
 static bool compac_prepare(struct thr_info *thr);
 
