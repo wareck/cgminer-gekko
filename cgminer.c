@@ -4680,8 +4680,13 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
+#if !defined __MINGW32__ || __WINPTHREADS_VERSION >= 0x00050000
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
+#else
+		if (pth && pth->p)
+			pthread_join(*pth, NULL);
+#endif
 	}
 }
 
@@ -5512,7 +5517,11 @@ static void set_curblock(const char *hexstr, const unsigned char *bedata)
 	int ofs;
 
 	cg_wlock(&ch_lock);
+#ifdef USE_GEKKO
+cgtime_real(&block_timeval);
+#else
 	cgtime(&block_timeval);
+#endif
 	strcpy(current_hash, hexstr);
 	cg_memcpy(current_block, bedata, 32);
 	get_timestamp(blocktime, sizeof(blocktime), &block_timeval);
@@ -5538,8 +5547,13 @@ static void set_blockdiff(const struct work *work)
 {
 	uint8_t pow = work->data[72];
 	int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
+#ifdef USE_GEKKO
+	if (powdiff < 8)
+		powdiff = 8;
+#else
 	if (powdiff < 0)
 		powdiff = 0;
+#endif
 	uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
 	double numerator = 0xFFFFULL << powdiff;
 	double ddiff = numerator / (double)diff32;
@@ -10819,10 +10833,10 @@ begin_bench:
 #endif
 	cgtime_real(&total_tv_start);
 	get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
+
+	cgtime(&total_tv_start);
 	cgtime(&total_tv_end);
 	cgtime(&tv_hashmeter);
-	//get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
-
 
 	watchpool_thr_id = 2;
 	thr = &control_thr[watchpool_thr_id];
@@ -10867,7 +10881,11 @@ begin_bench:
 	if (total_control_threads != 8)
 		early_quit(1, "incorrect total_control_threads (%d) should be 8", total_control_threads);
 
+#ifdef USE_GEKKO
+	set_lowprio();
+#else
 	set_highprio();
+#endif
 
 #ifdef USE_LIBSYSTEMD
 	sd_notify(false, "READY=1\n"

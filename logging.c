@@ -63,9 +63,11 @@ void _applog(int prio, const char *str, bool force)
 		char datetime[64];
 		struct timeval tv = {0, 0};
 		struct tm *tm;
-
+#ifdef USE_GEKKO
+		cgtime_real(&tv);
+#else
 		cgtime(&tv);
-
+#endif
 		const time_t tmp_time = tv.tv_sec;
 		int ms = (int)(tv.tv_usec / 1000);
 		tm = localtime(&tmp_time);
