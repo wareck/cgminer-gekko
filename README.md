@@ -16,6 +16,10 @@ This software is forked from cgminer 4.11.1 original from ckolivas.
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg)
 
+## GekkoScience Newpac Usb miner ##
+
+![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg)
+
 This software use a slighty moddified driver from novak's gekko driver.
 
 I allows working with icarus miner and gekko on same rig.
