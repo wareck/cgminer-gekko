@@ -386,7 +386,7 @@ fi
 AM_CONDITIONAL([HAS_BLOCKERUPTER], [test x$blockerupter = xyes])
 
 
-gekko="no"
+gekko="yes"
 
 AC_ARG_ENABLE([gekko],
 	[AC_HELP_STRING([--enable-gekko],[Compile support for GekkoScience (default disabled)])],
