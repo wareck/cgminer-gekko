@@ -141,7 +141,7 @@ void cgsleep_ms(int ms);
 void cgsleep_us(int64_t us);
 void cgtimer_time(cgtimer_t *ts_start);
 #define cgsleep_prepare_r(ts_start) cgtimer_time(ts_start)
-#ifdef USE_BITMAIN_SOC
+#if defined(WIN32) || defined(__APPLE__) || USE_BITMAIN_SOC
 void cgsleep_ms_r(cgtimer_t *ts_start, int ms);
 void cgsleep_us_r(cgtimer_t *ts_start, int64_t us);
 #else
