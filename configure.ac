@@ -389,7 +389,7 @@ AM_CONDITIONAL([HAS_BLOCKERUPTER], [test x$blockerupter = xyes])
 gekko="yes"
 
 AC_ARG_ENABLE([gekko],
-	[AC_HELP_STRING([--enable-gekko],[Compile support for GekkoScience (default disabled)])],
+	[AC_HELP_STRING([--disable-gekko],[Compile support for GekkoScience (default enabled)])],
 	[gekko=$enableval]
 	)
 if test "x$gekko" = xyes; then
