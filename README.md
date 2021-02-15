@@ -34,7 +34,7 @@ to build this specific code on linux:
 	sudo usermod -a -G dialout,plugdev $USER
 	sudo cp 01-cgminer.rules /etc/udev/rules.d/
 	CFLAGS="-O2 -march=native" ./autogen.sh
-	./configure --enable-gekko
+	./configure
 	make
 	make install
 

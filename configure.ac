@@ -2,7 +2,7 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
 m4_define([v_min], [11])
-m4_define([v_mic], [1-wrk2])
+m4_define([v_mic], [1-wrk])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_ver], [v_maj.v_min.v_mic])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
@@ -389,7 +389,7 @@ AM_CONDITIONAL([HAS_BLOCKERUPTER], [test x$blockerupter = xyes])
 gekko="yes"
 
 AC_ARG_ENABLE([gekko],
-	[AC_HELP_STRING([--enable-gekko],[Compile support for GekkoScience (default disabled)])],
+	[AC_HELP_STRING([--disable-gekko],[Compile support for GekkoScience (default enabled)])],
 	[gekko=$enableval]
 	)
 if test "x$gekko" = xyes; then
