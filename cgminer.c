@@ -16,6 +16,13 @@
 #include <curses.h>
 #endif
 
+#ifndef WIN32
+#include <sys/resource.h>
+#else
+#include <winsock2.h>
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,12 +48,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifndef WIN32
-#include <sys/resource.h>
-#else
-#include <winsock2.h>
-#include <windows.h>
-#endif
 #include <ccan/opt/opt.h>
 #include <jansson.h>
 #ifdef HAVE_LIBCURL
