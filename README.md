@@ -66,5 +66,7 @@ You can use your miner with last extranonce support for nicehash by adding #xnsu
 ## Credits
 
 ckolivas : https://github.com/ckolivas/cgminer.git
+
 vthoang  : https://github.com/vthoang/cgminer.git
+
 nicehash : https://github.com/nicehash/cgminer-ckolivas.git
