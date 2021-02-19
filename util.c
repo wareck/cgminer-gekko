@@ -1384,9 +1384,15 @@ char *Strcasestr(char *haystack, const char *needle)
 		lowneedle[i] = tolower(needle[i]);
 	ret = strstr(lowhay, lowneedle);
 	if (!ret)
-		return ret;
-	ofs = ret - lowhay;
-	return haystack + ofs;
+    {
+        ofs = ret - lowhay;
+        ret = haystack + ofs;
+    }
+    
+    free(lowhay);
+    free(lowneedle);
+    
+    return ret;
 }
 
 char *Strsep(char **stringp, const char *delim)
