@@ -1384,15 +1384,10 @@ char *Strcasestr(char *haystack, const char *needle)
 		lowneedle[i] = tolower(needle[i]);
 	ret = strstr(lowhay, lowneedle);
 	if (ret)
-    {
-        ofs = ret - lowhay;
-        ret = haystack + ofs;
-    }
+        return NULL
     
-    free(lowhay);
-    free(lowneedle);
-    
-    return ret;
+    ofs = ret - lowhay;
+    return haystack + ofs;
 }
 
 char *Strsep(char **stringp, const char *delim)
@@ -3663,7 +3658,7 @@ retry:
 	ret = read(cgsem->pipefd[0], &buf, 1);
 	if (unlikely(ret == 0))
 		applog(LOG_WARNING, "Failed to read errno=%d" IN_FMT_FFL, errno, file, func, line);
-	else if (unlikely(ret < 0 && interrupted()))
+	else if (unlikely(ret < 0 && interrupted))
 		goto retry;
 }
 
