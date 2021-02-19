@@ -1383,7 +1383,7 @@ char *Strcasestr(char *haystack, const char *needle)
 	for (i = 0; i < nlen; i++)
 		lowneedle[i] = tolower(needle[i]);
 	ret = strstr(lowhay, lowneedle);
-	if (!ret)
+	if (ret)
     {
         ofs = ret - lowhay;
         ret = haystack + ofs;
