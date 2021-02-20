@@ -64,9 +64,9 @@ You can use your miner with last extranonce support for nicehash by adding #xnsu
 	./cgminer -o stratum+tcp://sha256.eu.nicehash.com:3334#xnsub -u my_btc_address -p x --gekko-compac-freq 200 --gekko-2pac-freq 150 --gekko-newpac-freq 150
 	
 ## Credits
-
-ckolivas : https://github.com/ckolivas/cgminer.git
-
-vthoang  : https://github.com/vthoang/cgminer.git
-
-nicehash : https://github.com/nicehash/cgminer-ckolivas.git
+```
+ckolivas : https://github.com/ckolivas/cgminer.git (original cgminer code)
+vthoang  : https://github.com/vthoang/cgminer.git (gekko driver)
+nicehash : https://github.com/nicehash/cgminer-ckolivas.git (nicheash extranonce)
+prmam : coinbase flags fix and default configuration, udev permissions fix
+chipjarred : macos compilation fix, memory leak fix, and Fixing change of sign warnings when referring to buffers
