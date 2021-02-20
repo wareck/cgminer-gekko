@@ -16,11 +16,8 @@
 #include "crc.h"
 #include "sha2.h"
 #include "hexdump.c"
-#define get_fan_pwm(v)	(AVA8_PWM_MAX - (v) * AVA8_PWM_MAX / 100)
 
-#ifdef WIN32
-#include <windows.h>
-#endif
+#define get_fan_pwm(v)	(AVA8_PWM_MAX - (v) * AVA8_PWM_MAX / 100)
 
 int opt_avalon8_temp_target = AVA8_DEFAULT_TEMP_TARGET;
 

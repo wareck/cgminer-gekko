@@ -1383,10 +1383,10 @@ char *Strcasestr(char *haystack, const char *needle)
 	for (i = 0; i < nlen; i++)
 		lowneedle[i] = tolower(needle[i]);
 	ret = strstr(lowhay, lowneedle);
-	if (!ret)
-		return ret;
+	if (ret)
+    	return NULL;
 	ofs = ret - lowhay;
-	return haystack + ofs;
+    	return haystack + ofs;
 }
 
 char *Strsep(char **stringp, const char *delim)
@@ -1413,6 +1413,7 @@ void cgcond_time(struct timespec *abstime)
 	clock_gettime(CLOCK_REALTIME, abstime);
 }
 
+#ifdef USE_GEKKO
 /* Get CLOCK_REALTIME for display purposes */
 void cgtime_real(struct timeval *tv)
 {
@@ -1421,7 +1422,7 @@ void cgtime_real(struct timeval *tv)
 	tv->tv_sec = tp.tv_sec;
 	tv->tv_usec = tp.tv_nsec / 1000;
 }
-
+#endif
 #ifdef WIN32
 /* Mingw32 has no strsep so create our own custom one  */
 
@@ -3645,7 +3646,7 @@ retry:
 	ret = write(cgsem->pipefd[1], &buf, 1);
 	if (unlikely(ret == 0))
 		applog(LOG_WARNING, "Failed to write errno=%d" IN_FMT_FFL, errno, file, func, line);
-	else if (unlikely(ret < 0 && interrupted))
+	else if (unlikely(ret < 0 && interrupted()))
 		goto retry;
 }
 
@@ -3657,7 +3658,7 @@ retry:
 	ret = read(cgsem->pipefd[0], &buf, 1);
 	if (unlikely(ret == 0))
 		applog(LOG_WARNING, "Failed to read errno=%d" IN_FMT_FFL, errno, file, func, line);
-	else if (unlikely(ret < 0 && interrupted))
+	else if (unlikely(ret < 0 && interrupted())
 		goto retry;
 }
 

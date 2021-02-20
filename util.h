@@ -122,7 +122,9 @@ unsigned char *ser_string(char *s, int *slen);
 int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start) (void *), void *arg);
 void thr_info_cancel(struct thr_info *thr);
 void cgcond_time(struct timespec *abstime);
+#ifdef USE_GEKKO
 void cgtime_real(struct timeval *tv);
+#endif
 void cgtime(struct timeval *tv);
 void subtime(struct timeval *a, struct timeval *b);
 void addtime(struct timeval *a, struct timeval *b);
@@ -159,6 +161,7 @@ void ckrecalloc(void **ptr, size_t old, size_t new, const char *file, const char
 #define recalloc(ptr, old, new) ckrecalloc((void *)&(ptr), old, new, __FILE__, __func__, __LINE__)
 char *recv_line(struct pool *pool);
 bool parse_method(struct pool *pool, char *s);
+bool subscribe_extranonce(struct pool *pool);
 bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port);
 bool auth_stratum(struct pool *pool);
 bool initiate_stratum(struct pool *pool);
