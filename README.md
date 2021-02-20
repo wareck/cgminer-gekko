@@ -1,5 +1,5 @@
 ### ############################################################
-### CGminer 4.11.1 GekkoScience Compac, 2pac & Newpack BM1384 #
+##  CGminer 4.11.1 GekkoScience Compac, 2pac & Newpack BM1384 #
 ### ############################################################
 
 This is a cgminer 4.11.1 with support fot GekkoScience Compac, 2pac & Newpack BM1384 Support.
