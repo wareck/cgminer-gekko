@@ -8,15 +8,15 @@ This software is forked from cgminer 4.11.1 original from ckolivas.
 
 (you can refer to original documentation to docs/README)
 
-## GekkoScience compac Usb miner ##
+### GekkoScience compac Usb miner ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko.jpg)
 
-## GekkoScience 2pac Usb miner ##
+### GekkoScience 2pac Usb miner ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg)
 
-## GekkoScience Newpac Usb miner ##
+### GekkoScience Newpac Usb miner ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg)
 
@@ -57,7 +57,7 @@ For windows users, you can donwload the release zip file
 
 Inside you can find a cgminer_run.bat file and you can adjust you settings.
 
-## Nicehash extranonce support ##
+### Nicehash extranonce support ##
 
 You can use your miner with last extranonce support for nicehash by adding #xnsub at the address end, like this:
 
