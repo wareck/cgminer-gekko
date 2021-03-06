@@ -1,6 +1,6 @@
-##################################################################################
-# CGminer 4.11.1 GekkoScience Compac, 2pac & Newpack BM1384 #
-##################################################################################
+### ############################################################
+##  CGminer 4.11.1 GekkoScience Compac, 2pac & Newpack BM1384 #
+### ############################################################
 
 This is a cgminer 4.11.1 with support fot GekkoScience Compac, 2pac & Newpack BM1384 Support.
 
@@ -8,15 +8,15 @@ This software is forked from cgminer 4.11.1 original from ckolivas.
 
 (you can refer to original documentation to docs/README)
 
-## GekkoScience compac Usb miner ##
+### GekkoScience compac Usb miner ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko.jpg)
 
-## GekkoScience 2pac Usb miner ##
+### GekkoScience 2pac Usb miner ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg)
 
-## GekkoScience Newpac Usb miner ##
+### GekkoScience Newpac Usb miner ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg)
 
@@ -57,16 +57,16 @@ For windows users, you can donwload the release zip file
 
 Inside you can find a cgminer_run.bat file and you can adjust you settings.
 
-## Nicehash extranonce support ##
+### Nicehash extranonce support ##
 
 You can use your miner with last extranonce support for nicehash by adding #xnsub at the address end, like this:
 
 	./cgminer -o stratum+tcp://sha256.eu.nicehash.com:3334#xnsub -u my_btc_address -p x --gekko-compac-freq 200 --gekko-2pac-freq 150 --gekko-newpac-freq 150
 	
 ## Credits
-
-ckolivas : https://github.com/ckolivas/cgminer.git
-
-vthoang  : https://github.com/vthoang/cgminer.git
-
-nicehash : https://github.com/nicehash/cgminer-ckolivas.git
+```
+ckolivas : https://github.com/ckolivas/cgminer.git (original cgminer code)
+vthoang  : https://github.com/vthoang/cgminer.git (gekko driver)
+nicehash : https://github.com/nicehash/cgminer-ckolivas.git (nicheash extranonce)
+prmam : coinbase flags fix and default configuration, udev permissions fix
+chipjarred : macos compilation fix, memory leak fix, and Fixing change of sign warnings when referring to buffers

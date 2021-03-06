@@ -64,7 +64,7 @@ AC_FUNC_ALLOCA
 
 have_win32=false
 PTHREAD_FLAGS="-lpthread"
-##LIBZ_LIBS="-lz"
+#LIBZ_LIBS="-lz"
 DLOPEN_FLAGS="-ldl"
 WS2_LIBS=""
 MM_LIBS=""
@@ -386,19 +386,6 @@ fi
 AM_CONDITIONAL([HAS_BLOCKERUPTER], [test x$blockerupter = xyes])
 
 
-gekko="yes"
-
-AC_ARG_ENABLE([gekko],
-	[AC_HELP_STRING([--disable-gekko],[Compile support for GekkoScience (default enabled)])],
-	[gekko=$enableval]
-	)
-if test "x$gekko" = xyes; then
-	AC_DEFINE([USE_GEKKO], [1], [Defined to 1 if GekkoScience support is wanted])
-	AC_DEFINE([USE_VMASK], [1], [Defined to 1 if version mask rolling is wanted])
-	drivercount=x$drivercount
-fi
-AM_CONDITIONAL([HAS_GEKKO], [test x$gekko = xyes])
-
 cointerra="no"
 
 AC_ARG_ENABLE([cointerra],
@@ -439,6 +426,18 @@ if test "x$drillbit" = xyes; then
 fi
 AM_CONDITIONAL([HAS_DRILLBIT], [test x$drillbit = xyes])
 
+gekko="yes"
+
+AC_ARG_ENABLE([gekko],
+        [AC_HELP_STRING([--disable-gekko],[Compile support for GekkoScience (default enabled)])],
+        [gekko=$enableval]
+        )
+if test "x$gekko" = xyes; then
+        AC_DEFINE([USE_GEKKO], [1], [Defined to 1 if GekkoScience support is wanted])
+        AC_DEFINE([USE_VMASK], [1], [Defined to 1 if version mask rolling is wanted])
+        drivercount=x$drivercount
+fi
+AM_CONDITIONAL([HAS_GEKKO], [test x$gekko = xyes])
 
 hashfast="no"
 
@@ -842,13 +841,7 @@ fi
 
 echo "  curses.TUI...........: $cursesmsg"
 
-
 echo
-if test "x$dragonmint_t1" = xyes; then
-	echo "  DragonMint.T1.Halong.: Enabled"
-else
-        echo "  DragonMint.T1.Halong.: Disabled"
-fi
 
 if test "x$ants1" = xyes; then
 	echo "  Antminer.S1.Bitmain..: Enabled"
@@ -946,36 +939,16 @@ else
 	echo "  Bitmain.ASICs........: Disabled"
 fi
 
-
 if test "x$blockerupter" = xyes; then
 	echo "  BlockErupter.ASICs...: Enabled"
 else
 	echo "  BlockErupter.ASICs...: Disabled"
 fi
 
-if test "x$gekko" = xyes; then
-	echo "  GekkoScience.ASICs...: Enabled"
-else
-	echo "  GekkoScience.ASICs...: Disabled"
-fi
-
 if test "x$cointerra" = xyes; then
 	echo "  Cointerra.ASICs......: Enabled"
 else
 	echo "  Cointerra.ASICs......: Disabled"
-fi
-
-if test "x$sp10" = xyes; then
-	echo "  Spond-sp10.ASICs.....: Enabled"
-else
-	echo "  Spond-sp10.ASICs.....: Disabled"
-fi
-
-
-if test "x$sp30" = xyes; then
-	echo "  Spond-sp30.ASICs.....: Enabled"
-else
-	echo "  Spond-sp30.ASICs.....: Disabled"
 fi
 
 if test "x$bitmine_A1" = xyes; then
@@ -994,6 +967,12 @@ if test "x$drillbit" = xyes; then
 	echo "  Drillbit.BitFury.....: Enabled"
 else
 	echo "  Drillbit.BitFury.....: Disabled"
+fi
+
+if test "x$gekko" = xyes; then
+        echo "  GekkoScience.ASICs...: Enabled"
+else
+        echo "  GekkoScience.ASICs...: Disabled"
 fi
 
 if test "x$hashfast" = xyes; then
@@ -1031,6 +1010,19 @@ if test "x$modminer" = xyes; then
 else
 	echo "  ModMiner.FPGAs.......: Disabled"
 fi
+
+if test "x$sp10" = xyes; then
+        echo "  Spond-sp10.ASICs.....: Enabled"
+else
+        echo "  Spond-sp10.ASICs.....: Disabled"
+fi
+
+if test "x$sp30" = xyes; then
+        echo "  Spond-sp30.ASICs.....: Enabled"
+else
+        echo "  Spond-sp30.ASICs.....: Disabled"
+fi
+
 
 #Add any new device to this, along with a no on the end of the test
 if test "x$avalon$avalon2$avalon4$avalon7$avalon8$avalon_miner$bab$bflsc$bitforce$bitfury$bitfury16$bitmain_soc$gekko$blockerupter$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$dragonmint_t1" = xnonononononononnoononononononononononononononononononnoonono; then
