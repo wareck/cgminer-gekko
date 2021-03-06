@@ -122,7 +122,9 @@ unsigned char *ser_string(char *s, int *slen);
 int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start) (void *), void *arg);
 void thr_info_cancel(struct thr_info *thr);
 void cgcond_time(struct timespec *abstime);
+#ifdef USE_GEKKO
 void cgtime_real(struct timeval *tv);
+#endif
 void cgtime(struct timeval *tv);
 void subtime(struct timeval *a, struct timeval *b);
 void addtime(struct timeval *a, struct timeval *b);

@@ -134,7 +134,7 @@ static int compac_micro_send(struct cgpu_info *compac, uint8_t cmd, uint8_t chan
 				micro_temp = 32 + 1.8 * temp;
 				if (micro_temp != info->micro_temp) {
 					info->micro_temp = micro_temp;
-					applog(LOG_WARNING, "%s %d: micro temp changed to %d°C / %.1f°F", compac->drv->name, compac->device_id, temp, info->micro_temp);
+					applog(LOG_WARNING, "%s %d: micro temp changed to %dÂ°C / %.1fÂ°F", compac->drv->name, compac->device_id, temp, info->micro_temp);
 				}
 				break;
 			default:
