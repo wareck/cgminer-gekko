@@ -297,7 +297,7 @@ static uint64_t compac_check_nonce(struct cgpu_info *compac)
 		job_id = info->rx[4] ^ 0x80;
 	}
 
-	if (job_id > info->max_job_id || (abs(info->job_id - job_id) > 3 && abs(info->max_job_id - job_id + info->job_id) > 3)) {
+	if (job_id > info->max_job_id || ((info->job_id > (3 + job_id)) && (info->max_job_id + info->job_id) > (3 + job_id))) {
 		return hashes;
 	}
 
