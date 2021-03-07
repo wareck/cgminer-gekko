@@ -287,7 +287,8 @@ static uint64_t compac_check_nonce(struct cgpu_info *compac)
 	uint32_t nonce = (info->rx[3] << 0) | (info->rx[2] << 8) | (info->rx[1] << 16) | (info->rx[0] << 24);
 
 	uint32_t hwe = compac->hw_errors;
-	uint32_t job_id, i;
+    uint32_t job_id = 0;
+    uint32_t i;
 	uint64_t hashes = 0;
 	struct timeval now;
 
@@ -295,9 +296,9 @@ static uint64_t compac_check_nonce(struct cgpu_info *compac)
 		job_id = info->rx[5] & 0xff;
 	} else if (info->asic_type == BM1384) {
 		job_id = info->rx[4] ^ 0x80;
-	}
+    }
 
-	if (job_id > info->max_job_id || (abs(info->job_id - job_id) > 3 && abs(info->max_job_id - job_id + info->job_id) > 3)) {
+	if (job_id > info->max_job_id || ((info->job_id > (3 + job_id)) && (info->max_job_id + info->job_id) > (3 + job_id))) {
 		return hashes;
 	}
 
@@ -632,6 +633,30 @@ static void *compac_mine(void *object)
 		}
 		cgsleep_ms(sleep_ms);
 	}
+    
+    /*
+     FIXME: This function is defined to return void*, but did not return
+     anything at all.  It simply flowed off the end, which is undefined
+     behavior if the return value is used by the caller.  See C standard,
+     6.9.1 paragraph 12.
+     
+     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf
+     
+     Clang warns on it, but this is the kind of thing that should be an error,
+     not a warning.
+     
+     It's being passed as a function pointer parameter to thr_info_create,
+     which is defined to take a "void *(*) (void *)",  Function pointer
+     syntax is always a bit awkward, but if I'm interpreting that correctly,
+     it takes a pointer to a function that takes a void pointer and returns a
+     void pointer, which means this function's signature is correct, and not
+     returning a value is incorrect.  I have no idea what the correct value
+     to return would be, but invoking undefined behavior by not even having a
+     return statement has got to be worse.  It may just be silently doing the
+     wrong thing.  Returning NULL should force the issue and then it can be
+     fixed to return whatever is the correct pointer.
+     */
+    return NULL;
 }
 
 static void *compac_listen(void *object)
@@ -730,6 +755,30 @@ static void *compac_listen(void *object)
 			}
 		}
 	}
+    
+    /*
+     FIXME: This function is defined to return void*, but did not return
+     anything at all.  It simply flowed off the end, which is undefined
+     behavior if the return value is used by the caller.  See C standard,
+     6.9.1 paragraph 12.
+     
+     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf
+     
+     Clang warns on it, but this is the kind of thing that should be an error,
+     not a warning.
+     
+     It's being passed as a function pointer parameter to thr_info_create,
+     which is defined to take a "void *(*) (void *)",  Function pointer
+     syntax is always a bit awkward, but if I'm interpreting that correctly,
+     it takes a pointer to a function that takes a void pointer and returns a
+     void pointer, which means this function's signature is correct, and not
+     returning a value is incorrect.  I have no idea what the correct value
+     to return would be, but invoking undefined behavior by not even having a
+     return statement has got to be worse.  It may just be silently doing the
+     wrong thing.  Returning NULL should force the issue and then it can be
+     fixed to return whatever is the correct pointer.
+     */
+    return NULL;
 }
 
 static bool compac_init(struct thr_info *thr)

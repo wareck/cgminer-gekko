@@ -42,6 +42,23 @@
 
 #include "darwin_usb.h"
 
+#if __STDC_VERSION__ >= 201112L
+# define USE_STD_ATOMIC 1
+#else
+# define USE_STD_ATOMIC 0
+#endif
+
+#if USE_STD_ATOMIC
+# include <stdatomic.h>
+# define ATOMIC_COUNTER(x, value) static atomic_int x = (value)
+# define ATOMIC_INCREMENT(x) (atomic_fetch_add((x), 1) + 1)
+# define ATOMIC_DECREMENT(x) (atomic_fetch_add((x), -1) - 1)
+#else
+# define ATOMIC_COUNTER(x, value) static volatile int32_t x = (value)
+# define ATOMIC_INCREMENT(x) (OSAtomicIncrement32Barrier((x)))
+# define ATOMIC_DECREMENT(x) (OSAtomicDecrement32Barrier((x)))
+#endif
+
 /* async event thread */
 static pthread_mutex_t libusb_darwin_at_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  libusb_darwin_at_cond = PTHREAD_COND_INITIALIZER;
@@ -50,7 +67,8 @@ static clock_serv_t clock_realtime;
 static clock_serv_t clock_monotonic;
 
 static CFRunLoopRef libusb_darwin_acfl = NULL; /* event cf loop */
-static volatile int32_t initCount = 0;
+
+ATOMIC_COUNTER(initCount, 0);
 
 /* async event thread */
 static pthread_t libusb_darwin_at;
@@ -314,7 +332,7 @@ static void *darwin_event_thread_main (void *arg0) {
      This is required because, unlike NSThreads, pthreads are
      not automatically registered. Although we don't use
      Objective-C, we use CoreFoundation, which does. */
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060 && MAC_OS_X_VERSION_MIN_REQUIRED < 1080
   objc_registerThreadWithCollector();
 #endif
 
@@ -401,7 +419,7 @@ static int darwin_init(struct libusb_context *ctx) {
     return rc;
   }
 
-  if (OSAtomicIncrement32Barrier(&initCount) == 1) {
+  if (ATOMIC_INCREMENT(&initCount) == 1) {
     /* create the clocks that will be used */
 
     host_self = mach_host_self();
@@ -421,7 +439,7 @@ static int darwin_init(struct libusb_context *ctx) {
 }
 
 static void darwin_exit (void) {
-  if (OSAtomicDecrement32Barrier(&initCount) == 0) {
+  if (ATOMIC_DECREMENT(&initCount) == 0) {
     mach_port_deallocate(mach_task_self(), clock_realtime);
     mach_port_deallocate(mach_task_self(), clock_monotonic);
 
@@ -1149,7 +1167,28 @@ static int darwin_release_interface(struct libusb_device_handle *dev_handle, int
   if (kresult != kIOReturnSuccess)
     usbi_err (HANDLE_CTX (dev_handle), "Release: %s", darwin_error_str(kresult));
 
+# ifdef __clang__
+  /*
+   Clang warns that IO_OBJECT_NULL is being used as a null pointer type...
+   which it is, but apparently it doesn't like Apple's definition of it in
+   IOTypes.h.  Specifically the warning is
+  
+   os/darwin_usb.c:1176:27: warning: expression which evaluates to zero treated as a null pointer constant of type 'IOUSBInterfaceInterface300 **'
+         (aka 'struct IOUSBInterfaceStruct300 **') [-Wnon-literal-null-conversion]
+     cInterface->interface = IO_OBJECT_NULL;
+  
+   IOTypes.h defines like this
+  
+   #define IO_OBJECT_NULL  ((io_object_t) 0)
+
+   io_object_t is in a chain of typedefs that end up resolving to int32_t.  So
+   basically the problematic line is just setting cInterface->interface to NULL,
+   so just do that explicitly, at least for clang.
+   */
+  cInterface->interface = NULL;
+# else
   cInterface->interface = IO_OBJECT_NULL;
+# endif
 
   return darwin_to_libusb (kresult);
 }
