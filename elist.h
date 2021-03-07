@@ -174,6 +174,10 @@ static inline void list_splice_init(struct list_head *list,
 	}
 }
 
+#ifdef __clang__
+#define typeof(x) __typeof(x)
+#endif
+
 /**
  * list_entry - get the struct for this entry
  * @ptr:	the &struct list_head pointer.

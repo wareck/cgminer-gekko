@@ -46,6 +46,7 @@ dnl Make sure anyone changing configure.ac/Makefile.am has a clue
 AM_MAINTAINER_MODE
 
 dnl Checks for programs
+CFLAGS+=" -std=gnu11"
 AC_PROG_CC
 gl_EARLY
 AC_PROG_GCC_TRADITIONAL

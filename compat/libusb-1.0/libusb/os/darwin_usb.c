@@ -42,7 +42,7 @@
 
 #include "darwin_usb.h"
 
-#if __STDC_VERSION__ >= 199901L
+#if __STDC_VERSION__ >= 201112L
 # define USE_STD_ATOMIC 1
 #else
 # define USE_STD_ATOMIC 0
