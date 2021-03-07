@@ -287,7 +287,8 @@ static uint64_t compac_check_nonce(struct cgpu_info *compac)
 	uint32_t nonce = (info->rx[3] << 0) | (info->rx[2] << 8) | (info->rx[1] << 16) | (info->rx[0] << 24);
 
 	uint32_t hwe = compac->hw_errors;
-	uint32_t job_id, i;
+    uint32_t job_id = 0;
+    uint32_t i;
 	uint64_t hashes = 0;
 	struct timeval now;
 
@@ -295,7 +296,7 @@ static uint64_t compac_check_nonce(struct cgpu_info *compac)
 		job_id = info->rx[5] & 0xff;
 	} else if (info->asic_type == BM1384) {
 		job_id = info->rx[4] ^ 0x80;
-	}
+    }
 
 	if (job_id > info->max_job_id || ((info->job_id > (3 + job_id)) && (info->max_job_id + info->job_id) > (3 + job_id))) {
 		return hashes;
