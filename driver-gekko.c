@@ -633,6 +633,30 @@ static void *compac_mine(void *object)
 		}
 		cgsleep_ms(sleep_ms);
 	}
+    
+    /*
+     FIXME: This function is defined to return void*, but did not return
+     anything at all.  It simply flowed off the end, which is undefined
+     behavior if the return value is used by the caller.  See C standard,
+     6.9.1 paragraph 12.
+     
+     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf
+     
+     Clang warns on it, but this is the kind of thing that should be an error,
+     not a warning.
+     
+     It's being passed as a function pointer parameter to thr_info_create,
+     which is defined to take a "void *(*) (void *)",  Function pointer
+     syntax is always a bit awkward, but if I'm interpreting that correctly,
+     it takes a pointer to a function that takes a void pointer and returns a
+     void pointer, which means this function's signature is correct, and not
+     returning a value is incorrect.  I have no idea what the correct value
+     to return would be, but invoking undefined behavior by not even having a
+     return statement has got to be worse.  It may just be silently doing the
+     wrong thing.  Returning NULL should force the issue and then it can be
+     fixed to return whatever is the correct pointer.
+     */
+    return NULL;
 }
 
 static void *compac_listen(void *object)
@@ -731,6 +755,30 @@ static void *compac_listen(void *object)
 			}
 		}
 	}
+    
+    /*
+     FIXME: This function is defined to return void*, but did not return
+     anything at all.  It simply flowed off the end, which is undefined
+     behavior if the return value is used by the caller.  See C standard,
+     6.9.1 paragraph 12.
+     
+     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf
+     
+     Clang warns on it, but this is the kind of thing that should be an error,
+     not a warning.
+     
+     It's being passed as a function pointer parameter to thr_info_create,
+     which is defined to take a "void *(*) (void *)",  Function pointer
+     syntax is always a bit awkward, but if I'm interpreting that correctly,
+     it takes a pointer to a function that takes a void pointer and returns a
+     void pointer, which means this function's signature is correct, and not
+     returning a value is incorrect.  I have no idea what the correct value
+     to return would be, but invoking undefined behavior by not even having a
+     return statement has got to be worse.  It may just be silently doing the
+     wrong thing.  Returning NULL should force the issue and then it can be
+     fixed to return whatever is the correct pointer.
+     */
+    return NULL;
 }
 
 static bool compac_init(struct thr_info *thr)
