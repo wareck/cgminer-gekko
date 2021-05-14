@@ -719,7 +719,7 @@ static void *compac_listen(void *object)
 					break;
 				case MINER_OPEN_CORE:
 					if ((info->rx[0] == 0x72 && info->rx[1] == 0x03 && info->rx[2] == 0xEA && info->rx[3] == 0x83) ||
-						(info->rx[0] == 0xE1 && info->rx[0] == 0x6B && info->rx[0] == 0xF8 && info->rx[0] == 0x09)) {
+					    (info->rx[0] == 0xE1 && info->rx[1] == 0x6B && info->rx[2] == 0xF8 && info->rx[3] == 0x09)) {
 						//open core nonces = healthy chips.
 						info->zero_check++;
 					}
