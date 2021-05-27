@@ -2451,6 +2451,7 @@ static char *parse_config(json_t *config, bool fileconf)
 				} else {
 					snprintf(err_buf, sizeof(err_buf), "Parsing JSON option %s: %s",
 						p, err);
+                    free(name);
 					return err_buf;
 				}
 			}
