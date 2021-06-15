@@ -831,7 +831,7 @@ static bool compac_init(struct thr_info *thr)
 			break;
 		case IDENT_GSH:
 			info->frequency_requested = opt_gekko_gsh_freq;
-			info->frequency_start = opt_gekko_gsh_freq;
+			info->frequency_start = opt_gekko_start_freq;
 			break;
 		default:
 			info->frequency_requested = 200;
