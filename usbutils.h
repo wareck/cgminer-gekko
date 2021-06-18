@@ -196,6 +196,7 @@ enum sub_ident {
 	IDENT_GSD,
 	IDENT_GSE,
 	IDENT_GSH,
+	IDENT_GSI,
 	IDENT_HFA,
 	IDENT_HRO,
 	IDENT_ICA,

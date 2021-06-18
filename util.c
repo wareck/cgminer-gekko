@@ -2247,11 +2247,6 @@ static bool configure_stratum_mining(struct pool *pool)
 	json_t *response, *value, *res_val, *err_val;
 	json_error_t err;
 
-#ifdef USE_GEKKO
-	if (!opt_gekko_boost)
-		return true;
-#endif
-
 	snprintf(s, RBUFSIZE,
 		 "{\"id\": %d, \"method\": \"mining.configure\", \"params\": "
 		 "[[\""STRATUM_VERSION_ROLLING"\"], "
@@ -3198,7 +3193,7 @@ static bool setup_stratum_socket(struct pool *pool)
 		 * we can connect to quickly. */
 		noblock_socket(sockd);
 		if (connect(sockd, p->ai_addr, p->ai_addrlen) == -1) {
-			struct timeval tv_timeout = {1, 0};
+			struct timeval tv_timeout = {2, 0};
 			int selret;
 			fd_set rw;
 

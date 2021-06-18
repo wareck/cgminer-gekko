@@ -223,7 +223,7 @@ bool use_curses = true;
 #else
 bool use_curses;
 #endif
-static bool opt_widescreen;
+bool opt_widescreen;
 static bool alt_status;
 static bool switch_status;
 static bool opt_submit_stale = true;
@@ -296,18 +296,25 @@ int opt_bet_clk = 0;
 #endif
 #ifdef USE_GEKKO
 char *opt_gekko_serial = NULL;
-bool opt_gekko_boost = 0;
+bool opt_gekko_noboost = 0;
+bool opt_gekko_lowboost = 0;
 bool opt_gekko_gsc_detect = 0;
 bool opt_gekko_gsd_detect = 0;
 bool opt_gekko_gse_detect = 0;
 bool opt_gekko_gsh_detect = 0;
+bool opt_gekko_gsi_detect = 0;
 float opt_gekko_gsc_freq = 150;
 float opt_gekko_gsd_freq = 100;
 float opt_gekko_gse_freq = 150;
-float opt_gekko_gsh_freq = 100;
+float opt_gekko_tune_up = 97;
+float opt_gekko_tune_down = 95;
+float opt_gekko_wait_factor = 0.5;
+float opt_gekko_step_freq = 6.25;
+int opt_gekko_gsh_freq = 100;
+int opt_gekko_gsi_freq = 550;
+int opt_gekko_bauddiv = 0;
 int opt_gekko_gsh_vcore = 400;
 int opt_gekko_start_freq = 100;
-int opt_gekko_step_freq = 25;
 int opt_gekko_step_delay = 15;
 #endif
 #ifdef USE_HASHRATIO
@@ -1937,9 +1944,15 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--gekko-newpac-detect",
 			 opt_set_bool, &opt_gekko_gsh_detect,
 			 "Detect GekkoScience NewPac BM1387"),
-	OPT_WITHOUT_ARG("--gekko-newpac-boost",
-			 opt_set_bool, &opt_gekko_boost,
-			 "Enable GekkoScience NewPac AsicBoost"),
+	OPT_WITHOUT_ARG("--gekko-r606-detect",
+			 opt_set_bool, &opt_gekko_gsi_detect,
+			 "Detect GekkoScience Terminus BM1387"),
+	OPT_WITHOUT_ARG("--gekko-noboost",
+			 opt_set_bool, &opt_gekko_noboost,
+			 "Disable GekkoScience NewPac/R606 AsicBoost"),
+	OPT_WITHOUT_ARG("--gekko-lowboost",
+			 opt_set_bool, &opt_gekko_lowboost,
+			 "GekkoScience NewPac/R606 AsicBoost - 2 midstate"),
 	OPT_WITH_ARG("--gekko-terminus-freq",
 		     set_float_0_to_500, opt_show_floatval, &opt_gekko_gse_freq,
 		     "Set GekkoScience Terminus BM1384 frequency in MHz, range 6.25-500"),
@@ -1949,17 +1962,29 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--gekko-compac-freq",
 		     set_float_0_to_500, opt_show_floatval, &opt_gekko_gsc_freq,
 		     "Set GekkoScience Compac BM1384 frequency in MHz, range 6.25-500"),
+	OPT_WITH_ARG("--gekko-tune-down",
+		     set_float_0_to_500, opt_show_floatval, &opt_gekko_tune_down,
+		     "Set GekkoScience miner minimum hash quality, range 0-100"),
+	OPT_WITH_ARG("--gekko-tune-up",
+		     set_float_0_to_500, opt_show_floatval, &opt_gekko_tune_up,
+		     "Set GekkoScience miner ramping hash threshold, rante 0-99"),
+	OPT_WITH_ARG("--gekko-wait-factor",
+		     set_float_0_to_500, opt_show_floatval, &opt_gekko_wait_factor,
+		     "Set GekkoScience miner task send wait factor, range 0.01-1.00"),
+	OPT_WITH_ARG("--gekko-bauddiv",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_bauddiv,
+		     "Set GekkoScience BM1387 baud divider {0: auto, 1: 1.5M, 7: 375K, 13: 214K, 25: 115K}"),
 	OPT_WITH_ARG("--gekko-newpac-freq",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsh_freq,
 		     "Set GekkoScience NewPac BM1387 frequency in MHz, range 50-900"),
-	OPT_WITH_ARG("--gekko-newpac-vcore",
-		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsh_vcore,
-		     "Set GekkoScience NewPac BM1387 VCORE in mV, range 300-810"),
+	OPT_WITH_ARG("--gekko-r606-freq",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsi_freq,
+		     "Set GekkoScience Terminus R606 frequency in MHz, range 50-900"),
 	OPT_WITH_ARG("--gekko-start-freq",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_start_freq,
                      "Ramp start frequency MHz 25-500"),
 	OPT_WITH_ARG("--gekko-step-freq",
-		     set_int_0_to_9999, opt_show_intval, &opt_gekko_step_freq,
+		     set_float_0_to_500, opt_show_intval, &opt_gekko_step_freq,
 		     "Ramp frequency step MHz 1-100"),
 	OPT_WITH_ARG("--gekko-step-delay",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_step_delay,
@@ -5523,7 +5548,7 @@ static void set_curblock(const char *hexstr, const unsigned char *bedata)
 
 	cg_wlock(&ch_lock);
 #ifdef USE_GEKKO
-cgtime_real(&block_timeval);
+	cgtime_real(&block_timeval);
 #else
 	cgtime(&block_timeval);
 #endif
@@ -5552,13 +5577,13 @@ static void set_blockdiff(const struct work *work)
 {
 	uint8_t pow = work->data[72];
 	int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
-#ifdef USE_GEKKO
-	if (powdiff < 8)
-		powdiff = 8;
-#else
+//#ifdef USE_GEKKO
+//	if (powdiff < 8)
+//		powdiff = 8;
+//#else
 	if (powdiff < 0)
 		powdiff = 0;
-#endif
+//#endif
 	uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
 	double numerator = 0xFFFFULL << powdiff;
 	double ddiff = numerator / (double)diff32;
@@ -10821,6 +10846,9 @@ begin_bench:
 		cgpu->rolling = cgpu->total_mhashes = 0;
 	}
 
+	cgtime_real(&total_tv_start);
+	get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
+
 #ifdef USE_BITMAIN_SOC
 	struct sysinfo sInfo;
 	if (sysinfo(&sInfo))
@@ -10836,9 +10864,6 @@ begin_bench:
 		total_tv_start_sys=sInfo.uptime;
 	}
 #endif
-	cgtime_real(&total_tv_start);
-	get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
-
 	cgtime(&total_tv_start);
 	cgtime(&total_tv_end);
 	cgtime(&tv_hashmeter);

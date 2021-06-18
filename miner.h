@@ -1000,6 +1000,7 @@ struct pool;
 #define API_MCAST_CODE "FTW"
 #define API_MCAST_ADDR "224.0.0.75"
 
+extern bool opt_widescreen;
 extern bool opt_work_update;
 extern bool opt_protocol;
 extern bool have_longpoll;
@@ -1041,18 +1042,25 @@ extern char *opt_bitburner_fury_options;
 #endif
 #ifdef USE_GEKKO
 extern char *opt_gekko_serial;
-extern bool opt_gekko_boost;
+extern bool opt_gekko_noboost;
+extern bool opt_gekko_lowboost;
 extern bool opt_gekko_gsc_detect;
 extern bool opt_gekko_gsd_detect;
 extern bool opt_gekko_gse_detect;
 extern bool opt_gekko_gsh_detect;
+extern bool opt_gekko_gsi_detect;
 extern float opt_gekko_gsc_freq;
 extern float opt_gekko_gsd_freq;
 extern float opt_gekko_gse_freq;
-extern float opt_gekko_gsh_freq;
+extern float opt_gekko_tune_down;
+extern float opt_gekko_tune_up;
+extern float opt_gekko_wait_factor;
+extern float opt_gekko_step_freq;
+extern int opt_gekko_bauddiv;
+extern int opt_gekko_gsh_freq;
+extern int opt_gekko_gsi_freq;
 extern int opt_gekko_gsh_vcore;
 extern int opt_gekko_start_freq;
-extern int opt_gekko_step_freq;
 extern int opt_gekko_step_delay;
 #endif
 #ifdef USE_KLONDIKE

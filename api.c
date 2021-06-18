@@ -197,7 +197,7 @@ static const char *DEVICECODE = ""
 			"DT1 "
 #endif
 #ifdef USE_GEKKO
-			"GSD "
+			"GSX "
 #endif
 #ifdef USE_HASHFAST
 			"HFA "
