@@ -6,7 +6,7 @@
  * - GekkoScience Compac USB stick
  * - GekkoScience 2pac USB stick
  * - GekkoScience Newpac USB stick
- * - GekkoScience Terminus R606 pod
+ * - GekkoScience Terminus R606
  */
 
 /*#include <float.h>
