@@ -48,6 +48,8 @@ to build this specific code on linux:
   --gekko-compac-freq <clock>   Chip clock speed (MHz) default is 200 Mhz
   --gekko-2pac-freq <clock> Chip clock speed (Mhz) default is 150 Mhz 
   --gekko-newpac-freq <clock> Chip clock speed (Mhz) default is 150 Mhz
+  --gekko-r606-freq <clock> Set GekkoScience Terminus R606 frequency in MHz, range 50-900 (default: 550)
+  --gekko-terminus-detect Detect GekkoScience Terminus BM1384
   --suggest-diff <value> Limit diff for starting mine default is 32
 ```
 
