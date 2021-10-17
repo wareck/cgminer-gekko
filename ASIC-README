@@ -203,75 +203,7 @@ lot less CPU. For this reason, setting up for mining with cgminer on these
 devices requires different drivers.
 
 
-WINDOWS:
-
-On windows, the direct USB support requires the installation of a WinUSB
-driver (NOT the ftdi_sio driver), and attach it to the chosen USB device.
-When configuring your device, plug it in and wait for windows to attempt to
-install a driver on its own. It may think it has succeeded or failed but wait
-for it to finish regardless. This is NOT the driver you want installed. At this
-point you need to associate your device with the WinUSB driver. The easiest
-way to do this is to use the zadig utility which you must right click on and
-run as administrator. Then once you plug in your device you can choose the
-"list all devices" from the "option" menu and you should be able to see the
-device as something like: "BitFORCE SHA256 SC". Choose the install or replace
-driver option and select WinUSB. You can either google for zadig or download
-it from the cgminer directory in the DOWNLOADS link above.
-
-When you first switch a device over to WinUSB with zadig and it shows that
-correctly on the left of the zadig window, but it still gives permission
-errors, you may need to unplug the USB miner and then plug it back in. Some
-users may need to reboot at this point.
-
-
-LINUX:
-
-On linux, the direct USB support requires no drivers at all. However due to
-permissions issues, you may not be able to mine directly on the devices as a
-regular user without giving the user access to the device or by mining as
-root (administrator). In order to give your regular user access, you can make
-him a member of the plugdev group with the following commands:
-
- sudo usermod -G plugdev -a `whoami`
-
-If your distribution does not have the plugdev group you can create it with:
-
- sudo groupadd plugdev
-
-In order for the BFL devices to instantly be owned by the plugdev group and
-accessible by anyone from the plugdev group you can copy the file
-"01-cgminer.rules" from the cgminer archive into the /etc/udev/rules.d
-directory with the following command:
-
- sudo cp 01-cgminer.rules /etc/udev/rules.d/
-
-After this you can either manually restart udev and re-login, or more easily
-just reboot.
-
-
-OSX:
-
-On OSX, like Linux, no drivers need to be installed. However some devices
-like the bitfury USB sticks automatically load a driver thinking they're a
-modem and the driver needs to be unloaded for cgminer to work:
-
- sudo kextunload -b com.apple.driver.AppleUSBCDC
- sudo kextunload -b com.apple.driver.AppleUSBCDCACMData
-
-There may be a limit to the number of USB devices that you are allowed to start.
-The following set of commands, followed by a reboot will increase that:
-
- sudo su
- touch /etc/sysctl.conf
- echo kern.sysv.semume=100 >> /etc/sysctl.conf
- chown root:wheel /etc/sysctl.conf
- chmod 0644 /etc/sysctl.conf
-
-Some devices need superuser access to mine on them so cgminer may need to
-be started with sudo
-i.e.:
- sudo cgminer <insert commands here>
-
+See README 'SETTING UP USB DEVICES' for setting up USB mining with cgminer
 
 ---
 
@@ -926,11 +858,3 @@ Rockminer R-Box Devices
 
 Note that only a limited range is likely to be accepted (usually 200-290)
 
----
-
-This code is provided entirely free of charge by the programmer in his spare
-time so donations would be greatly appreciated. Please consider donating to the
-address below.
-
-Con Kolivas <kernel@kolivas.org>
-15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ

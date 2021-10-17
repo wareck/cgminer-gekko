@@ -1001,8 +1001,8 @@ To use miner.php requires a web server with PHP
 
 Basics: On ubuntu, to install apache2 and php, the commands are:
  sudo apt-get install apache2
- sudo apt-get install php7
- sudo /etc/init.d/apache2 reload
+ sudo apt-get install php
+ sudo service apache2 restart
 
 On Fedora 17:
  yum install httpd php

@@ -2514,7 +2514,6 @@ static char *parse_config(json_t *config, bool fileconf)
 				} else {
 					snprintf(err_buf, sizeof(err_buf), "Parsing JSON option %s: %s",
 						p, err);
-//                    free(name); #to be checked
 					return err_buf;
 				}
 			}
@@ -5613,13 +5612,8 @@ static void set_blockdiff(const struct work *work)
 {
 	uint8_t pow = work->data[72];
 	int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
-//#ifdef USE_GEKKO
-//	if (powdiff < 8)
-//		powdiff = 8;
-//#else
 	if (powdiff < 0)
 		powdiff = 0;
-//#endif
 	uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
 	double numerator = 0xFFFFULL << powdiff;
 	double ddiff = numerator / (double)diff32;

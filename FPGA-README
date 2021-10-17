@@ -5,54 +5,7 @@ This README contains extended details about FPGA mining with cgminer
 For ModMinerQuad (MMQ) BitForce (BFL) and Icarus (ICA, BLT, LLT, AMU, CMR)
 --------------------------------------------------------------------------
 
-When mining on windows, the driver being used will determine if mining will work.
-
-If the driver doesn't allow mining, you will get a "USB init," error message
-i.e. one of:
- open device failed, err %d, you need to install a WinUSB driver for the device
-or
- claim interface %d failed, err %d
-
-The best solution for this is to use a tool called Zadig to set the driver:
- http://sourceforge.net/projects/libwdi/files/zadig/
-
-This allows you set the driver for the device to be WinUSB which is usually
-required to make it work if you're having problems
-
-With Zadig, you may need to run it as administrator and if your device is
-plugged in but you cannot see it, use the Menu: Options -> List All Devices
-
-You must also make sure you are using the latest libusb-1.0.dll supplied
-with cgminer (not the libusbx version)
-
-When you first switch a device over to WinUSB with Zadig and it shows that
-correctly on the left of the Zadig window, but it still gives permission
-errors, you may need to unplug the USB miner and then plug it back in
-
--
-
-When mining on linux, but not using 'sudo' and not logged into 'root' you
-may get a USB priviledge error (-3), so you may also need to do the following:
-
- sudo cp 01-cgminer.rules /etc/udev/rules.d/
-
-And also:
- sudo usermod -G plugdev -a `whoami`
-
-If your linux distro doesn't have the 'plugdev' group, you can create it like:
- sudo groupadd plugdev
-
-Then reboot ...
-
--
-
-There is a hidden option in cgminer to dump out a lot of information
-about USB that will help the developers to assist you if you are having
-problems:
-
- --usb-dump 0
-
-It will only help if you have a working FPGA device listed above
+See README 'SETTING UP USB DEVICES' for setting up USB mining with cgminer
 
 
 ModMinerQuad (MMQ)
