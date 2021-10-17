@@ -20,6 +20,10 @@ This software is forked from cgminer 4.11.1 original from ckolivas.
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg)
 
+### GekkoScience CompacF Usb miner ##
+
+![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/compacf.jpg)
+
 ### GekkoScience Terminus r606 ##
 
 ![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/terminus.jpg)
