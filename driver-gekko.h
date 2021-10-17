@@ -1,26 +1,36 @@
+/*
+ * Copyright 2017-2021 vh
+ * Copyright 2021 kano
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option)
+ * any later version.  See COPYING for more details.
+ */
+
 #include "math.h"
 #include "miner.h"
 #include "usbutils.h"
-
-#if defined(WIN32) || defined(__APPLE__)
-#define thread_yield() sched_yield()
-#else
-#define thread_yield() pthread_yield(NULL)
-#endif
+#include "klist.h"
 
 #define JOB_MAX      0x7F
 #define BUFFER_MAX   0xFF
 #define SAMPLE_SIZE  0x78
 #define MS_SECOND_1  1000
-#define MS_SECOND_5  1000 * 5
-#define MS_SECOND_15 1000 * 15
-#define MS_SECOND_30 1000 * 30
-#define MS_MINUTE_1  1000 * 60
-#define MS_MINUTE_2  1000 * 60 * 2
-#define MS_MINUTE_5  1000 * 60 * 5
-#define MS_MINUTE_10 1000 * 60 * 10
-#define MS_MINUTE_30 1000 * 60 * 30
-#define MS_HOUR_1    1000 * 60 * 60
+
+#define MS_SECOND_5  (MS_SECOND_1 * 5)
+#define MS_SECOND_10 (MS_SECOND_1 * 10)
+#define MS_SECOND_15 (MS_SECOND_1 * 15)
+#define MS_SECOND_30 (MS_SECOND_1 * 30)
+#define MS_MINUTE_1  (MS_SECOND_1 * 60)
+
+#define MS_MINUTE_2  (MS_MINUTE_1 * 2)
+#define MS_MINUTE_3  (MS_MINUTE_1 * 3)
+#define MS_MINUTE_4  (MS_MINUTE_1 * 4)
+#define MS_MINUTE_5  (MS_MINUTE_1 * 5)
+#define MS_MINUTE_10 (MS_MINUTE_1 * 10)
+#define MS_MINUTE_30 (MS_MINUTE_1 * 30)
+#define MS_HOUR_1    (MS_MINUTE_1 * 60)
 
 enum miner_state {
 	MINER_INIT = 1,
@@ -38,7 +48,8 @@ enum miner_state {
 
 enum miner_asic {
 	BM1384 = 1,
-	BM1387
+	BM1387,
+	BM1397
 };
 
 enum plateau_type {
@@ -93,23 +104,114 @@ struct ASIC_INFO {
 	uint64_t hashrate;           // Estimated hashrate = cores x chips x frequency
 };
 
+struct COMPAC_NONCE
+{
+	int asic;
+	unsigned char rx[BUFFER_MAX];
+	size_t len;
+	size_t prelen;
+	struct timeval when;
+};
+
+#define DATA_NONCE(_item) ((struct COMPAC_NONCE *)(_item->data))
+#define ALLOC_NLIST_ITEMS 256
+#define LIMIT_NLIST_ITEMS 0
+
+// BM1397 info->job_id offsets to check (when job_id is wrong)
+static int cur_attempt[] = { 0, -4, -8, -12 };
+#define CUR_ATTEMPT (sizeof(cur_attempt)/sizeof(int))
+
+// macro to adjust frequency choices to be an integer multple of info->freq_base
+#define FREQ_BASE(_f) (ceil((float)(_f) / info->freq_base) * info->freq_base)
+
+// macro to add/subtract from the job_id but roll in the min...max range
+#define JOB_ID_ROLL(_jid, _add, _info) \
+	((_info)->min_job_id + (((_jid) + (_add) - (_info)->min_job_id) % \
+		((_info)->max_job_id + 1 - (_info)->min_job_id)))
+
+#define GHNUM (60*5)
+#define GHOFF(n) (((n) + GHNUM) % GHNUM)
+// a time jump without any nonces will reset the GEKKOHASH data
+//  this would normally be a miner failure, so should reset anyway,
+//  however under normal mining operation, using 10sec,
+//   a 6GH/s asic will have this happen, on average, about once every 10 days
+//   a 30GH/s asic is unlikely to have this happen in the life of the universe
+#define GHLIMsec 10
+
+// number of nonces that should give better than 80% accuracy
+// CDF[ERlang] 400 0.8 = 9.0991e-06
+#define GHNONCES 400
+
+// a loss of this much hash rate will reduce requested freq and reset
+#define GHREQUIRE 0.80
+
+// number of nonces needed before using as the rolling hash rate
+// N.B. 200Mhz ticket 16 GSF is around 2/sec
+// also, 8 has high variance ... but resets shouldn't be common
+// code adds 1 to this value since the first nonce isn't part of the H/s calc
+#define GHNONCENEEDED 8
+
+// running 5min nonce diff buffer (for GH/s)
+// offset = current second, GHOFF(offset-1) = previous second
+// GHOFF(offset-(GHNUM-1)) = GHOFF(offset+1) = oldest possible
+// GHOFF(offset-last) = oldest used
+// code is all linear except one loop that is almost always only
+//  one interation or total max one interation per second elapsed real time
+struct GEKKOHASH
+{
+	// seconds time of [offset]
+	time_t zerosec;
+	// the position of [0]
+	int offset;
+	// total diff in each second
+	int64_t diff[GHNUM];
+	// time of the first nonce in each second
+	struct timeval firstt[GHNUM];
+	// diff of first nonce in each second
+	int64_t firstd[GHNUM];
+	// time of the last nonce in each second
+	struct timeval lastt[GHNUM];
+	// number of nonces in each second
+	int noncenum[GHNUM];
+	// sum of diff[0..last-1]
+	int64_t diffsum;
+	// number of nonces in 0..last-1
+	int noncesum;
+	// last used offset 0 based
+	int last;
+};
+
 struct COMPAC_INFO {
 
-	enum sub_ident ident;            // Miner identity
-	enum miner_state mining_state;   // Miner state
-	enum miner_asic asic_type;       // ASIC Type
-	struct thr_info *thr;            // Running Thread
-	struct thr_info rthr;            // Listening Thread
-	struct thr_info wthr;            // Miner Work Thread
+	enum sub_ident ident;		// Miner identity
+	enum miner_state mining_state;	// Miner state
+	enum miner_asic asic_type;	// ASIC Type
+	struct thr_info *thr;		// Running Thread
+	struct thr_info rthr;		// Listening Thread
+	struct thr_info wthr;		// Miner Work Thread
 
-	pthread_mutex_t lock;        // Mutex
-	pthread_mutex_t wlock;       // Mutex Serialize Writes
-	pthread_mutex_t rlock;       // Mutex Serialize Reads
+	pthread_mutex_t lock;		// Mutex
+	pthread_mutex_t wlock;		// Mutex Serialize Writes
+	pthread_mutex_t rlock;		// Mutex Serialize Reads
 
+	struct thr_info nthr;		// GSF Nonce Thread
+	K_LIST *nlist;			// GSF Nonce list
+	K_LIST *nstore;			// GSF Nonce store
+	pthread_mutex_t nlock;		// GSF lock
+	pthread_cond_t ncond;		// GSF wait
+	uint64_t ntimeout;		// GSF number of cond timeouts
+	uint64_t ntrigger;		// GSF number of cond tiggered
+
+	float freq_mult;	     // frequency multiplier
+	float freq_base;	     // frequency mod value
+	float step_freq;	     // frequency step value
+	float min_freq;              // Lowest frequency mine2 will tune down to
+	int ramp_time;               // time to allow for initial frequency ramp
 	float frequency;             // Chip Average Frequency
 	float frequency_asic;        // Highest of current asics.
 	float frequency_default;     // ASIC Frequency on RESET
 	float frequency_requested;   // Requested Frequency
+	float frequency_selected;    // Initial Requested Frequency
 	float frequency_start;       // Starting Frequency
 	float frequency_fail_high;   // Highest Frequency of Chip Failure
 	float frequency_fail_low;    // Lowest Frequency of Chip Failure
@@ -123,6 +225,8 @@ struct COMPAC_INFO {
 	float eff_wu;                // wu : expected wu
 	float tune_up;               // Increase frequency when eff_gs is above value
 	float tune_down;             // Decrease frequency when eff_gs is below value
+	float freq_fail;	     // last freq set failure on BM1397
+	float hr_scale;		     // scale adjustment for hashrate
 
 	float micro_temp;            // Micro Reported Temp
 	float wait_factor;           // Used to compute max_task_wait
@@ -131,14 +235,14 @@ struct COMPAC_INFO {
 	float scanhash_ms;           // Sleep time inside scanhash loop
 	float task_ms;               // Avg time(ms) between task sent to device
 	uint32_t fullscan_us;        // Estimated time(us) for full nonce range
-	uint64_t hashrate;           // Estimated hashrate = cores x chips x frequency
+	uint64_t hashrate;           // Estimated hashrate = cores x chips x frequency x hr_scale
 	uint64_t busy_work;
 
 	uint64_t task_hcn;           // Hash Count Number - max nonce iter.
 	uint32_t prev_nonce;         // Last nonce found
 
 	int failing;                 // Flag failing sticks
-	int fail_count;              // Track failures.
+	int fail_count;              // Track failures = resets
 	int frequency_fo;            // Frequency check token
 	int frequency_of;            // Frequency check token
 	int accepted;                // Nonces accepted
@@ -155,6 +259,7 @@ struct COMPAC_INFO {
 	int vcore;                   // Core voltage
 	int micro_found;             // Found a micro to communicate with
 
+	bool can_boost;		     // true if boost is possible
 	bool vmask;                  // Current pool's vmask
 	bool boosted;                // Good nonce found for midstate2/3/4
 	bool report;
@@ -172,8 +277,10 @@ struct COMPAC_INFO {
 	uint64_t hashes;             // Hashes completed
 	uint64_t xhashes;            // Hashes completed / 0xffffffffull
 	uint32_t job_id;             // JobId incrementer
-	uint32_t log_wide;           // Extra output in widescreen mode
+	int32_t log_wide;            // Extra output in widescreen mode
 	uint32_t low_hash;           // Tracks of low hashrate
+	uint32_t min_job_id;         // JobId start/rollover
+	uint32_t add_job_id;         // JobId increment
 	uint32_t max_job_id;         // JobId cap
 	uint64_t max_task_wait;      // Micro seconds to wait before next task is sent
 	uint32_t ramping;            // Ramping incrementer
@@ -203,9 +310,27 @@ struct COMPAC_INFO {
 	struct timeval last_wu_increase;        // Last wu_max change
 	struct timeval last_pool_lost;          // Last time we lost pool
 
-	struct ASIC_INFO asics[64];
-	bool active_work[JOB_MAX];              // Tag good and stale work
-	struct work *work[JOB_MAX];             // Work ring buffer
+	struct timeval first_task;
+	uint64_t tasks;
+	uint64_t cur_off[CUR_ATTEMPT];
+
+	double last_work_diff;			// Diff of last work sent
+	struct timeval last_ticket_attempt;	// List attempt to set ticket
+	int ticket_number;			// offset in ticket array
+	int ticket_work;			// work sent since ticket set
+	int64_t ticket_nonces;			// nonces since ticket set
+	int64_t below_nonces;			// nonces too low since ticket set
+	bool ticket_ok;				// ticket working ok
+	bool ticket_got_low;			// nonce found close to but >= diff
+	int ticket_failures;			// Must not exceed MAX_TICKET_CHECK
+	struct ASIC_INFO asics[255];
+	bool active_work[JOB_MAX+1];            // Tag good and stale work
+	struct work *work[JOB_MAX+1];           // Work ring buffer
+
+	pthread_mutex_t ghlock;			// Mutex for all access to gh
+	struct GEKKOHASH gh;			// running hash rate buffer
+	struct timeval tune_limit;		// time between tune checks
+	struct timeval last_tune_up;		// time of last tune up attempt
 
 	unsigned char task[BUFFER_MAX];         // Task transmit buffer
 	unsigned char cmd[BUFFER_MAX];          // Command transmit buffer

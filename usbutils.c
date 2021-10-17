@@ -1074,6 +1074,18 @@ static struct usb_find_devices find_dev[] = {
 		.timeout = COMPAC_TIMEOUT_MS,
 		.latency = LATENCY_UNUSED,
 		INTINFO(gek2_ints) },
+	{
+		.drv = DRIVER_gekko,
+		.name = "GSF",
+		.ident = IDENT_GSF,
+		.idVendor = 0x0403,
+		.idProduct = 0x6015,
+		.iManufacturer = "GekkoScience",
+		.iProduct = "CompacF Bitcoin Miner",
+		.config = 1,
+		.timeout = COMPAC_TIMEOUT_MS,
+		.latency = LATENCY_UNUSED,
+		INTINFO(gek2_ints) },
 #endif
 	{ DRIVER_MAX, NULL, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL }
 };
@@ -1615,7 +1627,11 @@ static void cgusb_check_init()
 	if (stats_initialised == false) {
 		// N.B. environment LIBUSB_DEBUG also sets libusb_set_debug()
 		if (opt_usbdump >= 0) {
+#if LIBUSB_API_VERSION >= 0x01000106
+			libusb_set_option(NULL, LIBUSB_OPTION_LOG_LEVEL, opt_usbdump);
+#else
 			libusb_set_debug(NULL, opt_usbdump);
+#endif
 			usb_all(opt_usbdump);
 		}
 		stats_initialised = true;

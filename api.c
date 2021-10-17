@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Andrew Smith
+ * Copyright 2011-2021 Andrew Smith
  * Copyright 2011-2015,2018 Con Kolivas
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -984,6 +984,7 @@ static struct api_data *api_add_data_full(struct api_data *root, char *name, enu
 				api_data->data = cgmalloc(sizeof(time_t));
 				*(time_t *)(api_data->data) = *((time_t *)data);
 				break;
+			case API_FLOAT:
 			case API_VOLTS:
 			case API_TEMP:
 			case API_AVG:
@@ -1064,6 +1065,11 @@ struct api_data *api_add_int64(struct api_data *root, char *name, int64_t *data,
 struct api_data *api_add_double(struct api_data *root, char *name, double *data, bool copy_data)
 {
 	return api_add_data_full(root, name, API_DOUBLE, (void *)data, copy_data);
+}
+
+struct api_data *api_add_float(struct api_data *root, char *name, float *data, bool copy_data)
+{
+	return api_add_data_full(root, name, API_FLOAT, (void *)data, copy_data);
 }
 
 struct api_data *api_add_elapsed(struct api_data *root, char *name, double *data, bool copy_data)
@@ -1258,6 +1264,9 @@ static struct api_data *print_data(struct io_data *io_data, struct api_data *roo
 				break;
 			case API_DOUBLE:
 				snprintf(buf, sizeof(buf), "%f", *((double *)(root->data)));
+				break;
+			case API_FLOAT:
+				snprintf(buf, sizeof(buf), "%f", *((float *)(root->data)));
 				break;
 			case API_ELAPSED:
 				snprintf(buf, sizeof(buf), "%.0f", *((double *)(root->data)));
@@ -5141,7 +5150,7 @@ void api(int api_thr_id)
 
 						for (i = 0; cmds[i].name != NULL; i++) {
 							if (strcmp(cmdptr, cmds[i].name) == 0) {
-								sprintf(cmdbuf, "|%s|", cmdptr);
+								snprintf(cmdbuf, sizeof(cmdbuf), "|%s|", cmdptr);
 								if (isjoin) {
 									if (strstr(cmdsbuf, cmdbuf)) {
 										did = true;

@@ -1346,18 +1346,18 @@ static void __maybe_unused timersubspec(struct timespec *a, const struct timespe
 	spec_nscheck(a);
 }
 #else /* USE_BITMAIN_SOC */
-static int timespec_to_ms(struct timespec *ts)
+static int __maybe_unused timespec_to_ms(struct timespec *ts)
 {
 	return ts->tv_sec * 1000 + ts->tv_nsec / 1000000;
 }
 
-static int64_t timespec_to_us(struct timespec *ts)
+static int64_t __maybe_unused timespec_to_us(struct timespec *ts)
 {
 	return (int64_t)ts->tv_sec * 1000000 + ts->tv_nsec / 1000;
 }
 
 /* Subtract b from a */
-static void timersubspec(struct timespec *a, const struct timespec *b)
+static void __maybe_unused timersubspec(struct timespec *a, const struct timespec *b)
 {
 	a->tv_sec -= b->tv_sec;
 	a->tv_nsec -= b->tv_nsec;
@@ -1383,11 +1383,10 @@ char *Strcasestr(char *haystack, const char *needle)
 	for (i = 0; i < nlen; i++)
 		lowneedle[i] = tolower(needle[i]);
 	ret = strstr(lowhay, lowneedle);
-	if (ret)
-        return NULL;
-    
-    ofs = ret - lowhay;
-    return haystack + ofs;
+	if (!ret)
+		return ret;
+	ofs = ret - lowhay;
+	return haystack + ofs;
 }
 
 char *Strsep(char **stringp, const char *delim)
@@ -2672,8 +2671,7 @@ static bool parse_vmask(struct pool *pool, json_t *params)
 	}
 	if (json_is_array(params))
 		params = json_array_get(params, 0);
-	//if (!json_is_string(params) || !json_string_length(params)) { //wait cgliner fix this error
-		if (!json_is_string(params)) {
+	if (!json_is_string(params) || !json_string_length(params)) {
 		applog(LOG_INFO, "Params invalid string for parse_vmask for pool %d",
 		       pool->pool_no);
 		goto out;
@@ -3337,8 +3335,26 @@ resend:
 	}
 
 	/* Attempt to configure stratum protocol feature set first. */
+#ifdef USE_GEKKO
+	configure_stratum_mining(pool);
+	if (!pool->sock) {
+		//repair damage done by configure_stratum_mining
+		if (!setup_stratum_socket(pool)) {
+			sockd = false;
+			goto out;
+		}
+
+		sockd = true;
+
+		if (recvd) {
+			/* Get rid of any crap lying around if we're resending */
+			clear_sock(pool);
+		}
+	}
+#else
 	if (!configure_stratum_mining(pool))
 		goto out;
+#endif
 
 	if (recvd) {
 		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": []}", swork_id++);

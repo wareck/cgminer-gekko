@@ -2,7 +2,7 @@
 ##  CGminer 4.11.1 GekkoScience Compac, 2pac & Newpack BM1384 #
 ### ############################################################
 
-This is a cgminer 4.11.1 with support fot GekkoScience Compac, 2pac & Newpack BM1384 Support.
+This is a cgminer 4.11.1 with support for GekkoScience Compac, CompacF, 2pac.
 
 This software is forked from cgminer 4.11.1 original from ckolivas.
 
@@ -71,6 +71,7 @@ You can use your miner with last extranonce support for nicehash by adding #xnsu
 	
 ## Credits
 ```
+Kanoi    : https://github.com/kanoi/cgminer (optimized code and driver fix)
 ckolivas : https://github.com/ckolivas/cgminer.git (original cgminer code)
 vthoang  : https://github.com/vthoang/cgminer.git (gekko driver)
 nicehash : https://github.com/nicehash/cgminer-ckolivas.git (nicheash extranonce)

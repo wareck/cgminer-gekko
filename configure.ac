@@ -1,8 +1,8 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
-m4_define([v_min], [11])
-m4_define([v_mic], [1-wrk])
+m4_define([v_min], [12])
+m4_define([v_mic], [0-wrk])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_ver], [v_maj.v_min.v_mic])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
@@ -11,7 +11,7 @@ m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([cgminer], [v_ver], [kernel@kolivas.org])
+AC_INIT([cgminer], [v_ver], [kano])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
@@ -65,7 +65,7 @@ AC_FUNC_ALLOCA
 
 have_win32=false
 PTHREAD_FLAGS="-lpthread"
-#LIBZ_LIBS="-lz"
+LIBZ_LIBS="-lz"
 DLOPEN_FLAGS="-ldl"
 WS2_LIBS=""
 MM_LIBS=""
@@ -581,7 +581,7 @@ AC_ARG_WITH([curses],
 if test "x$curses" = "xno"; then
 	cursesmsg='User specified --without-curses. TUI support DISABLED'
 else
-	AC_SEARCH_LIBS(addstr, pdcurses ncurses pdcurses, [
+	AC_SEARCH_LIBS(setupterm, pdcurses ncurses pdcurses, [
 		curses=yes
 		cursesmsg="FOUND: ${ac_cv_search_addstr}"
 		AC_DEFINE([HAVE_CURSES], [1], [Defined to 1 if curses TUI support is wanted])

@@ -17,7 +17,8 @@ Currently supported devices include:
 - BlackArrow Minion
 - Bi*fury USB
 - Cointerra
-- Compac bitshopperde and GekkoScience
+- Compac bitshopperde
+- GekkoScience
 - Halong Dragonmint T1
 - Hashfast Babyjet and Sierra
 - Hashratio
@@ -118,9 +119,18 @@ Cointerra USB devices are set up as per the USB ASIC instructions below.
 
 Compac devices
 
-Compac devices need the --enable-icarus option when compiling cgminer.
+Bitshopperde compac devices need the --enable-gekko option when compiling cgminer.
+This also supports the GekkoScience devices.
 
-bitshopperde come up as BSC and GekkoScience as GSC
+bitshopperde come up as BSC, BSD, BSE
+
+
+GekkoScience devices
+
+GekkoScience devices need the --enable-gekko option when compiling cgminer.
+This also supports the bitshopperde devices.
+
+GekkoScience come up as GSC, GSD, GSE, GSF, GSH, GSI
 
 
 HALONG devices

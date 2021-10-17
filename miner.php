@@ -1,5 +1,14 @@
 <?php
+#
+# v42.14
+# Copyright 2011-2018 Kano
+# Licensed under the GNU General Public License version 3,
+#  or (at your option) any later version.
+#
 session_start();
+#
+global $ect;
+$ect = 'ECTABLE';
 #
 global $doctype, $title, $miner, $port, $readonly, $notify;
 global $rigport, $rigs, $rignames, $rigbuttons;
@@ -12,7 +21,9 @@ global $ignorerefresh, $changerefresh, $autorefresh;
 global $allowcustompages, $customsummarypages, $user_pages;
 global $miner_font_family, $miner_font_size;
 global $bad_font_family, $bad_font_size, $add_css_names;
-global $colouroverride, $placebuttons, $userlist;
+global $colouroverride, $placebuttons, $userlist, $mmcmd;
+global $avatmaxmed, $avatmaxhi, $avatempmed, $avatemphi, $avaghsmmmin;
+global $s9tempmed, $s9temphi, $s9chainmin, $s9acn;
 #
 $doctype = "<!DOCTYPE html>\n";
 #
@@ -116,6 +127,20 @@ $ignorerefresh = false;
 $changerefresh = true;
 $autorefresh = 0;
 #
+# Settings for avalon miners - adjust in myminer.php based
+# on the type of avalon miner you have
+$avatmaxmed = 100;
+$avatmaxhi = 110;
+$avatempmed = 32;
+$avatemphi = 40;
+$avaghsmmmin = 8000;
+#
+# Settings for s9 miners - adjust in myminer.php
+$s9tempmed = 100;
+$s9temphi = 110;
+$s9chainmin = 4000;
+$s9acn = 63;
+#
 # Should we allow custom pages?
 # (or just completely ignore them and don't display the buttons)
 $allowcustompages = true;
@@ -155,13 +180,210 @@ $statspage = array(
 			'Difficulty Rejected=DiffR',
 			'Work Utility=WU', 'Hardware Errors=HW Errs',
 			'Network Blocks=Net Blks'),
- 'COIN' => array('*'),
+ 'COIN' => array('Current Block Time','Current Block Hash','Network Difficulty'),
  'STATS' => array('*'));
 #
 $statssum = array(
  'SUMMARY' => array('MHS av', 'MHS 5m', 'Found Blocks',
 			'Difficulty Accepted', 'Difficulty Rejected',
 			'Work Utility', 'Hardware Errors'));
+#
+$avalonmmflds = array('#', 'MM', 'ID', 'MMID', 'Connecter', 'Elapsed',
+			'Temp=Inflow', 'TMax=Outflow', 'Fan=FanRPM',
+			'FanR=Fan%', 'GEN.AVATHS=TH/s||GHSmm', 'Vi', 'Vo',
+			'Freq', 'Led', 'PG', 'ECHU', 'ECMM', 'Ver');
+#
+$avalonpage = array(
+ 'DATE' => null,
+ 'COIN' => array('Current Block Time','Current Block Hash','Network Difficulty'),
+ 'SUMMARY' => array('#', 'Elapsed', 'GEN.THS av=TH/s av||MHS av',
+			'GEN.THS 5m=TH/s 5m||MHS 5m',
+			'Found Blocks=Blks',
+			'Difficulty Accepted=DiffA',
+			'Difficulty Rejected=DiffR',
+			'Work Utility=WU', 'Hardware Errors=HW Errs',
+			'Network Blocks=Net Blks', 'Best Share'),
+ $ect => null, # show the EC* code table
+ 'MM' => $avalonmmflds
+);
+#
+$avalonsum = array(
+ 'SUMMARY' => array('#', 'GEN.THS av', 'MHS av', 'GEN.THS 5m', 'MHS 5m',
+			'Found Blocks', 'Difficulty Accepted',
+			'Difficulty Rejected', 'Work Utility',
+			'Hardware Errors'),
+ 'MM' => array('#', 'GEN.AVATHS', 'GHSmm'));
+#
+$avalonext = array(
+ 'COIN' => array(
+  'group' => array('Current Block Hash', 'Network Difficulty'),
+  'calc' => array('Current Block Time' => 'min')),
+ 'SUMMARY' => array(
+  'gen' => array('THS av' => 'MHS av / 1000000.0',
+		'THS 5m' => 'MHS 5m / 1000000.0')),
+ 'MM' => array(
+  'gen' => array('AVATHS' => 'GHSmm / 1000.0'))
+);
+#
+$avalonspage = array(
+ 'DATE' => null,
+ 'COIN' => array('Current Block Time','Current Block Hash','Network Difficulty'),
+ $ect => null, # show the EC* code table
+ 'MM0' => $avalonmmflds, # hi temp and low hash
+ 'MM1' => $avalonmmflds, # hi temp only
+ 'MM2' => $avalonmmflds, # low hash only
+ 'MM3' => $avalonmmflds # the rest
+);
+#
+$avalonsmmsum = array('#', 'GEN.AVATHS', 'GHSmm');
+$avalonssum = array(
+ 'MM0' => $avalonsmmsum,
+ 'MM1' => $avalonsmmsum,
+ 'MM2' => $avalonsmmsum,
+ 'MM3' => $avalonsmmsum
+);
+#
+$s9page = array(
+ 'DATE' => null,
+ 'STATS' => array('#', 'Elapsed', 'fan_num', 'GEN.FanA=FanA||fan3',
+		'GEN.FanB=FanB||fan6', 'GEN.TempA=TempA||temp2_6',
+		'GEN.TempB=TempB||temp2_7', 'GEN.TempC=TempC||temp2_8',
+		'GEN.S9THS=TH/s||total_rate',
+		'GEN.AcnA=ChainA||chain_acn6', 'GEN.AcnB=ChainB||chain_acn7',
+		'GEN.AcnC=ChainC||chain_acn8', 'GEN.RateA=RateA||chain_rate6',
+		'GEN.RateB=RateB||chain_rate7', 'GEN.RateC=RateC||chain_rate8')
+);
+#
+$s9sum = array(
+ 'STATS' => array('#', 'GEN.S9THS', 'total_rate')
+);
+#
+function s9fmtsub($match, $num, $ch, $alldata, $warnclass, $errorclass)
+{
+ global $s9tempmed, $s9temphi, $s9chainmin, $s9acn;
+ $lab = '';
+ $ret = '';
+ $class = '';
+ $len = strlen($match);
+ foreach ($alldata as $fld => $val)
+ {
+	$rep = preg_replace('/\d*$/', '', $fld);
+	if ($rep == $match)
+	{
+		if ($val != '' && $val != '0')
+		{
+			if ($num-- > 0)
+				continue;
+			$lab = $ch.substr($fld, $len).': ';
+			$ret = $val;
+			break;
+		}
+	}
+ }
+ if ($ret == '')
+ {
+	$lab = '';
+	$ret = 'none/0';
+	$class = $errorclass;
+ }
+ else
+ {
+	switch($match)
+	{
+	 case 'temp2_':
+		if ($ret == 0 || $ret >= $s9temphi)
+			$class = $errorclass;
+		else
+		{
+			if ($ret >= $s9tempmed)
+				$class = $warnclass;
+		}
+		$ret .= '&deg;C';
+		break;
+	 case 'chain_acn':
+		if ($ret != $s9acn)
+			$class = $warnclass;
+		break;
+	 case 'chain_rate':
+		if ($ret == 0)
+			$class = $errorclass;
+		else
+		{
+			if ($ret < $s9chainmin)
+				$class = $warnclass;
+		}
+		$ret = number_format((float)$ret, 2);
+		break;
+	}
+ }
+ return array($lab.$ret, $class);
+}
+#
+function s9fmt($section, $name, $value, $when, $alldata, $warnclass,
+			$errorclass, $hiclass, $loclass, $totclass)
+{
+ $ret = '';
+ $class = '';
+ if ($section == 'total' && $name != 'S9THS')
+	 return array($ret, $class);
+ switch($name)
+ {
+  case 'FanA':
+	return s9fmtsub('fan', 0, 'f', $alldata, $warnclass, $errorclass);
+  case 'FanB':
+	return s9fmtsub('fan', 1, 'f', $alldata, $warnclass, $errorclass);
+  case 'TempA':
+	return s9fmtsub('temp2_', 0, 't', $alldata, $warnclass, $errorclass);
+  case 'TempB':
+	return s9fmtsub('temp2_', 1, 't', $alldata, $warnclass, $errorclass);
+  case 'TempC':
+	return s9fmtsub('temp2_', 2, 't', $alldata, $warnclass, $errorclass);
+  case 'AcnA':
+	return s9fmtsub('chain_acn', 0, 'a', $alldata, $warnclass, $errorclass);
+  case 'AcnB':
+	return s9fmtsub('chain_acn', 1, 'a', $alldata, $warnclass, $errorclass);
+  case 'AcnC':
+	return s9fmtsub('chain_acn', 2, 'a', $alldata, $warnclass, $errorclass);
+  case 'RateA':
+	return s9fmtsub('chain_rate', 0, 'r', $alldata, $warnclass, $errorclass);
+  case 'RateB':
+	return s9fmtsub('chain_rate', 1, 'r', $alldata, $warnclass, $errorclass);
+  case 'RateC':
+	return s9fmtsub('chain_rate', 2, 'r', $alldata, $warnclass, $errorclass);
+  case 'S9THS':
+	if ($value == 0)
+	{
+		$class = $errorclass;
+		$ret = 0;
+	}
+	else
+		$ret = number_format(floatval($value)/1000.0, 2);
+	break;
+ }
+ return array($ret, $class);
+}
+# use the first non-zero value - allow 1, 2 or 3 parameters
+function s9ghs($ghs1 = 0, $ghs2 = 0, $ghs3 = 0)
+{
+ if ($ghs1 != 0)
+	 return($ghs1);
+ if ($ghs2 != 0)
+	 return($ghs2);
+ if ($ghs3 != 0)
+	 return($ghs3);
+ return 0;
+}
+# set them to a fixed value then use the above custom fmt to find the values
+$s9ext = array(
+ 'STATS' => array(
+  'where' => array(array('ID', '!sub', 'POOL')),
+  'gen' => array('FanA' => '1', 'FanB' => '2', 'TempA' => '3',
+		'TempB' => '4', 'TempC' => '5',
+		'S9THS' => 's9ghs("GHS av","GHS 5s","total_rate")',
+		'AcnA' => '7', 'AcnB' => '8', 'AcnC' => '9', 'RateA' => '10',
+		'RateB' => '11', 'RateC' => '12'),
+  'fmt' => 's9fmt')
+);
 #
 $poolspage = array(
  'DATE' => null,
@@ -286,10 +508,10 @@ $kanogenpage = array(
  'DATE' => null,
  'RIGS' => null,
  'SUMMARY+COIN' => array('SUMMARY.Elapsed=Elapsed',
-			'GEN.Mined=Block%', 'GEN.GHS Acc=GH/s Acc',
-			'GEN.GHS av=GH/s av||SUMMARY.MHS av=MHS av',
-			'GEN.GHS 5m=GH/s 5m||SUMMARY.MHS 5m=MHS 5m',
-			'GEN.GHS WU=GH/s WU||SUMMARY.Work Utility=WU',
+			'GEN.Mined=Block%', 'GEN.THS Acc=TH/s Acc',
+			'GEN.THS av=TH/s av||SUMMARY.MHS av=MHS av',
+			'GEN.THS 5m=TH/s 5m||SUMMARY.MHS 5m=MHS 5m',
+			'GEN.THS WU=TH/s WU||SUMMARY.Work Utility=WU',
 			'SUMMARY.Found Blocks=Blks',
 			'SUMMARY.Difficulty Accepted=DiffA',
 			'SUMMARY.Difficulty Rejected=DiffR',
@@ -304,12 +526,13 @@ $kanogenpage = array(
 			'Difficulty Accepted=DiffA',
 			'Difficulty Rejected=DiffR',
 			'Difficulty Stale=DiffS',
-			'Best Share', 'GEN.Acc=Pool Acc%', 'GEN.Rej=Pool Rej%')
+			'Best Share', 'GEN.Acc=Pool Acc%', 'GEN.Rej=Pool Rej%'),
+ 'COIN' => array('Current Block Time','Current Block Hash','Network Difficulty')
 );
 # sum should list all fields seperately including GEN/BGEN || replacements
 $kanogensum = array(
- 'SUMMARY+COIN' => array('GEN.Mined', 'GEN.GHS Acc', 'GEN.GHS av',
-			'GEN.GHS 5m', 'GEN.GHS WU',
+ 'SUMMARY+COIN' => array('GEN.Mined', 'GEN.THS Acc', 'GEN.THS av',
+			'GEN.THS 5m', 'GEN.THS WU',
 			'SUMMARY.MHS av', 'SUMMARY.MHS 5m',
 			'SUMMARY.Work Utility',
 			'SUMMARY.Found Blocks',
@@ -324,19 +547,19 @@ $kanogensum = array(
 # 'group' must use the 'name1||name2' format for GEN/BGEN fields
 $kanogenext = array(
  'SUMMARY+COIN' => array(
-  'gen' => array('GHS Acc' =>
+  'gen' => array('THS Acc' =>
 			'round(pow(2,32) * SUMMARY.Difficulty Accepted / '.
-				'SUMMARY.Elapsed / 10000000) / 100',
+				'SUMMARY.Elapsed / 10000000) / 100000',
 		'Mined' =>
 			'SUMMARY.Elapsed * SUMMARY.Work Utility / 60 / '.
 				'COIN.Network Difficulty',
-		'GHS av' =>
-			'SUMMARY.MHS av / 1000.0',
-		'GHS 5m' =>
-			'SUMMARY.MHS 5m / 1000.0',
-		'GHS WU' =>
+		'THS av' =>
+			'SUMMARY.MHS av / 1000000.0',
+		'THS 5m' =>
+			'SUMMARY.MHS 5m / 1000000.0',
+		'THS WU' =>
 			'round(pow(2,32) * SUMMARY.Work Utility / 60 / '.
-				'10000000 ) / 100')),
+				'10000000 ) / 100000')),
  'POOL' => array(
   'group' => array('URL'),
   'calc' => array('Diff1 Shares' => 'sum', 'Difficulty Accepted' => 'sum',
@@ -400,6 +623,9 @@ $customsummarypages = array(
  'Kano' => 1,
  'Mobile' => 1,
  'Stats' => 1,
+ 'Avalon' => 1,
+ 'S9' => 1,
+ 'Avalons' => 1,
  'Pools' => 1
 );
 #
@@ -440,6 +666,9 @@ $colouroverride = array();
 #  anything else means don't show them - case sensitive
 $placebuttons = 'top';
 #
+# If 'estats' doesn't work or isn't enabled, replace this with 'stats'
+$mmcmd = 'estats';
+#
 # This below allows you to put your own settings into a seperate file
 # so you don't need to update miner.php with your preferred settings
 # every time a new version is released
@@ -447,6 +676,30 @@ $placebuttons = 'top';
 # 'miner.php' - and put your own settings in there
 if (file_exists('myminer.php'))
  include_once('myminer.php');
+#
+# define $avalonsext after myminer.php to allow override of $ava... limits
+$avalonsmmggen = array('AVATHS' => 'GHSmm / 1000.0');
+$avalonsext = array(
+ 'COIN' => array(
+  'group' => array('Current Block Hash', 'Network Difficulty'),
+  'calc' => array('Current Block Time' => 'min')),
+ 'MM0' => array(
+  'where' => array(array('TMax', '>=', $avatmaxmed),
+		array('GHSmm', '<', $avaghsmmmin)),
+  'gen' => $avalonsmmggen),
+ 'MM1' => array(
+  'where' => array(array('TMax', '>=', $avatmaxmed),
+		array('GHSmm', '>=', $avaghsmmmin)),
+  'gen' => $avalonsmmggen),
+ 'MM3' => array(
+  'where' => array(array('TMax', '<', $avatmaxmed),
+		array('GHSmm', '<', $avaghsmmmin)),
+  'gen' => $avalonsmmggen),
+ 'MM2' => array(
+  'where' => array(array('TMax', '<', $avatmaxmed),
+		array('GHSmm', '>=', $avaghsmmmin)),
+  'gen' => $avalonsmmggen)
+);
 #
 # This is the system default that must always contain all necessary
 # colours so it must be a constant
@@ -484,6 +737,9 @@ global $sys_pages;
 $sys_pages = array(
  'Mobile' => array($mobilepage, $mobilesum),
  'Stats' => array($statspage, $statssum),
+ 'Avalon' => array($avalonpage, $avalonsum, $avalonext),
+ 'Avalons' => array($avalonspage, $avalonssum, $avalonsext),
+ 'S9' => array($s9page, $s9sum, $s9ext),
  'Pools' => array($poolspage, $poolssum, $poolsext),
  'DevNot' => array($devnotpage, $devnotsum),
  'DevDet' => array($devdetpage, $devdetsum),
@@ -492,7 +748,7 @@ $sys_pages = array(
  'Summary' => array($syspage, $syssum)
 );
 #
-# Don't touch these 2
+# Don't touch these
 $miner = null;
 $port = null;
 #
@@ -950,12 +1206,15 @@ function revert($str)
 function api($rig, $cmd)
 {
  global $haderror, $error;
- global $miner, $port, $hidefields;
+ global $miner, $port, $hidefields, $mmcmd;
 
  $socket = getsock($rig, $miner, $port);
  if ($socket != null)
  {
-	socket_write($socket, $cmd, strlen($cmd));
+	if ($cmd == 'mm')
+		socket_write($socket, $mmcmd, strlen($mmcmd));
+	else
+		socket_write($socket, $cmd, strlen($cmd));
 	$line = readsockline($socket);
 	socket_close($socket);
 
@@ -1014,6 +1273,62 @@ function api($rig, $cmd)
 				$counter++;
 			}
 		}
+	}
+	if ($cmd == 'mm')
+	{
+		$data2 = array();
+		$num = 0;
+		foreach ($data as $name => $values)
+		{
+			if (substr($name, 0, 5) !== 'STATS')
+				$data2[$name] = $values;
+			else
+			{
+				if (substr($values['ID'], 0, 4) == 'POOL')
+					continue;
+				$snum = substr($name, 5);
+				#
+				if (isset($values['Connector']))
+					$auc = $values['Connector'];
+				else
+					$auc = 'AUC';
+				$auc .= $snum;
+				#
+				foreach ($values as $nam => $val)
+				{
+					if (substr($nam, 0, 5) !== 'MM ID')
+						continue;
+					$mm = 'MM'.$num;
+					#
+					$data2[$mm] = array('MM' => $num,
+							'ID' => $values['ID'],
+							'MMID' => substr($nam,5),
+							'Connecter' => $auc);
+					#
+					$len = strlen($val);
+					$pos = 0;
+					while ($pos < $len)
+					{
+						while ($val[$pos] == ' ')
+							$pos++;
+						$brl = strpos($val, '[', $pos+1);
+						if ($brl === false)
+							break;
+						$brr = strpos($val, ']', $brl+1);
+						if ($brr === false)
+							break;
+						#
+						$subn = substr($val, $pos, $brl - $pos);
+						$data2[$mm][$subn] = substr($val, $brl+1, $brr-$brl-1);
+						#
+						$pos = $brr+1;
+					}
+					#
+					$num++;
+				}
+			}
+		}
+		return $data2;
 	}
 	return $data;
  }
@@ -1126,6 +1441,8 @@ function endzero($num)
 function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 {
  global $dfmt, $rownum;
+ global $avatmaxmed, $avatmaxhi, $avatempmed, $avatemphi, $avaghsmmmin;
+ global $s9tempmed, $s9temphi, $s9chainmin, $s9acn;
 
  if ($alldata == null)
 	$alldata = array();
@@ -1167,11 +1484,13 @@ function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 	 * To speed up the PHP, the case statement is just $name
 	 * It used to be $section.'.'.$name
 	 * If any names clash, the case code will need to check the value of
-	 * $section to resolve the clash - as with 'Last Share Time' below
+	 *  $section to resolve the clash - as with 'Last Share Time' below
 	 * If the code picks up a field that you wish to format differently,
-	 * then you'll need a customsummarypage 'fmt' extension
+	 *  then you'll need a customsummarypage 'fmt' extension
+	 * This also removes trailing numbers so multiple fields like in the
+	 *  S9 don't require many case lines
 	 */
-	switch ($name)
+	switch (preg_replace('/\d*$/', '', $name))
 	{
 	case '0':
 		break;
@@ -1315,8 +1634,20 @@ function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 		if ($section == 'total')
 			break;
 		$ret = $value.'&deg;C';
+		if (!isset($alldata['GPU']))
+		{
+			if ($value == 0)
+				$ret = '&nbsp;';
+			break;
+		}
+	case 'GPU Clock':
+	case 'Memory Clock':
+	case 'GPU Voltage':
+	case 'GPU Activity':
+		if ($section == 'total')
+			break;
 		if ($value == 0)
-			$ret = '&nbsp;';
+			$class = $warnclass;
 		break;
 	case 'Fan Percent':
 		if ($section == 'total')
@@ -1448,12 +1779,18 @@ function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 			break;
 		$ret = date($dfmt, $value);
 		break;
+	case 'Current Block Version':
+		if ($section == 'total')
+			break;
+		$ret = sprintf("0x%08x", $value);
+		break;
 	case 'Last Share Difficulty':
 		if ($section == 'total')
 			break;
 	case 'Difficulty Accepted':
 	case 'Difficulty Rejected':
 	case 'Difficulty Stale':
+	case 'Network Difficulty':
 		if ($value != '')
 			$ret = number_format((float)$value, 2);
 		break;
@@ -1473,9 +1810,162 @@ function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 		if ($value != '')
 			$ret = number_format((float)$value);
 		break;
+	// Ava specific stats fields
+	case 'GHSmm':
+	case 'AVATHS':
+		if ($value != '')
+			$ret = number_format((float)$value, 2);
+
+		if ($section != 'total')
+		{
+			if ($value == 0)
+				$class = $errorclass;
+			else
+			{
+				if ($name == 'GHSmm')
+				{
+					if ($value < $avaghsmmmin)
+						$class = $warnclass;
+				}
+				else
+				{
+					if ($value < ($avaghsmmmin/1000.0))
+						$class = $warnclass;
+				}
+			}
+		}
+		break;
+	case 'Temp':
+		if ($section == 'total')
+			break;
+		$ret = $value.'&deg;C';
+		if ($section == 'MM')
+		{
+			if ($value == 0 || $value >= $avatemphi)
+				$class = $errorclass;
+			else
+				if ($value >= $avatempmed)
+					$class = $warnclass;
+		}
+		break;
+	case 'TMax':
+		if ($section == 'total')
+			break;
+		$ret = $value.'&deg;C';
+		if ($value == 0 || $value >= $avatmaxhi)
+			$class = $errorclass;
+		else
+			if ($value >= $avatmaxmed)
+				$class = $warnclass;
+		break;
+	case 'PG':
+		if ($section == 'total')
+			break;
+		if ($value != '15')
+		{
+			if ($value > 10)
+				$class = $warnclass;
+			else
+				$class = $errorclass;
+
+		}
+		$ret = $value;
+		break;
+	case 'ECHU':
+		if ($section == 'total')
+			break;
+		$ret = $value;
+		$chk = str_replace(array(' ','0'), '', $value);
+		if ($chk != '')
+		{
+			$class = $warnclass;
+			$vals = explode(' ', $value);
+			$ret = '';
+			$sep = '';
+			foreach ($vals as $one)
+			{
+				if ($one == '0' || $one == '1')
+					$ret .= $sep.$one;
+				else
+					$ret .= $sep.'x'.dechex($one);
+				$sep = ' ';
+			}
+		}
+		$ret = str_replace(' ', '&nbsp;', $ret);
+		break;
+	case 'Vi':
+	case 'Vo':
+		if ($section == 'total')
+			break;
+		$ret = str_replace(' ', '&nbsp;', $value);
+		break;
+	case 'ECMM':
+		if ($section == 'total')
+			break;
+		if ($value != '0')
+		{
+			$class = $warnclass;
+			$ret = 'x'.dechex($value);
+		}
+		else
+			$ret = $value;
+		break;
+	case 'Ver':
+		if ($section == 'total')
+			break;
+		$ret = str_replace('-', '&#8209;', $value);
+		break;
+	// S9 specific stats fields
+	case 'fan_num':
+		if ($section == 'total')
+			break;
+		$ret = $value;
+		if ($value < 1)
+			$class = $warnclass;
+		break;
+	case 'temp2_':
+		if ($section == 'total')
+			break;
+		$ret = $value.'&deg;C';
+		if ($value == 0 || $value >= $s9temphi)
+			$class = $errorclass;
+		else
+			if ($value >= $s9tempmed)
+				$class = $warnclass;
+		break;
+	case 'chain_acn':
+		if ($section == 'total')
+			break;
+		$ret = $value;
+		if ($value != $s9acn)
+			$class = $warnclass;
+		break;
+	case 'chain_rate':
+		if ($value != '')
+			$ret = number_format((float)$value, 2);
+
+		if ($section != 'total')
+		{
+			if ($value == 0)
+				$class = $errorclass;
+			else
+			{
+				if ($value < $s9chainmin)
+					$class = $warnclass;
+			}
+		}
+		break;
+	case 'total_rate':
+		if ($value != '')
+			$ret = number_format((float)$value, 2);
+		if ($value == 0)
+			$class = $errorclass;
+		break;
 	// BUTTON.
 	case 'Rig':
 	case 'Pool':
+	case 'GPU':
+		break;
 	// Sample GEN fields
 	case 'Mined':
 		if ($value != '')
@@ -1490,6 +1980,11 @@ function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 	case 'GHS 5m':
 	case 'GHS WU':
 	case 'GHS Acc':
+	case 'THS':
+	case 'THS av':
+	case 'THS 5m':
+	case 'THS WU':
+	case 'THS Acc':
 		if ($value != '')
 			$ret = number_format((float)$value, 2);
 		break;
@@ -1718,6 +2213,102 @@ function details($cmd, $list, $rig)
 #
 global $devs;
 $devs = null;
+#
+function gpubuttons($count, $rig)
+{
+ global $devs;
+
+ $basic = array( 'GPU', 'Enable', 'Disable', 'Restart' );
+
+ $options = array(	'intensity' => 'Intensity',
+			'fan' => 'Fan Percent',
+			'engine' => 'GPU Clock',
+			'mem' => 'Memory Clock',
+			'vddc' => 'GPU Voltage' );
+
+ newtable();
+ newrow();
+
+ foreach ($basic as $head)
+	echo "<td class=h>$head</td>";
+
+ foreach ($options as $name => $des)
+	echo "<td class=h nowrap>$des</td>";
+
+ $n = 0;
+ for ($c = 0; $c < $count; $c++)
+ {
+	endrow();
+	newrow();
+
+	foreach ($basic as $name)
+	{
+		list($ignore, $class) = fmt('BUTTON', 'GPU', '', 0, null);
+		echo "<td$class>";
+
+		if ($name == 'GPU')
+			echo $c;
+		else
+		{
+			echo "<input type=button value='$name $c' onclick='prs(\"gpu";
+			echo strtolower($name);
+			echo "|$c\",$rig)'>";
+		}
+
+		echo '</td>';
+	}
+
+	foreach ($options as $name => $des)
+	{
+		list($ignore, $class) = fmt('BUTTON', 'GPU', '', 0, null);
+		echo "<td$class>";
+
+		if (!isset($devs["GPU$c"][$des]))
+			echo '&nbsp;';
+		else
+		{
+			$value = $devs["GPU$c"][$des];
+			echo "<input type=button value='Set $c:' onclick='prs2(\"gpu$name|$c\",$n,$rig)'>";
+			echo "<input size=7 type=text name=gi$n value='$value' id=gi$n>";
+			$n++;
+		}
+
+		echo '</td>';
+	}
+
+ }
+ endrow();
+ endtable();
+}
+#
+function processgpus($rig)
+{
+ global $error;
+ global $warnfont, $warnoff;
+
+ $gpus = api($rig, 'gpucount');
+
+ if ($error != null)
+	otherrow("<td>Error getting GPU count: $warnfont$error$warnoff</td>");
+ else
+ {
+	if (!isset($gpus['GPUS']['Count']))
+	{
+		$rw = '<td>No GPU count returned: '.$warnfont;
+		$rw .= $gpus['STATUS']['STATUS'].' '.$gpus['STATUS']['Msg'];
+		$rw .= $warnoff.'</td>';
+		otherrow($rw);
+	}
+	else
+	{
+		$count = $gpus['GPUS']['Count'];
+		if ($count == 0)
+			otherrow('<td>No GPUs</td>');
+		else
+			gpubuttons($count, $rig);
+	}
+ }
+}
 #
 function showpoolinputs($rig, $ans)
 {
@@ -2011,21 +2602,25 @@ function doOne($rig, $preprocess)
 
  process($cmds, $rig);
 
+ if ($haderror == false && $readonly === false)
+	processgpus($rig);
+
  if ($placebuttons == 'bot' || $placebuttons == 'both')
 	pagebuttons($rig, null);
 }
 #
 global $sectionmap;
 # map sections to their api command
-# DEVS is a special case that will match PGA or ASC
+# DEVS is a special case that will match GPU, PGA or ASC
 # so you can have a single table with both in it
-# DATE is hard coded so not in here
+# DATE and $ect are hard coded so not in here
 $sectionmap = array(
 	'RIGS' => 'version',
 	'SUMMARY' => 'summary',
 	'POOL' => 'pools',
 	'DEVS' => 'devs',
 	'EDEVS' => 'edevs',
+	'GPU' => 'devs',	// You would normally use DEVS
 	'PGA' => 'devs',	// You would normally use DEVS
 	'ASC' => 'devs',	// You would normally use DEVS
 	'NOTIFY' => 'notify',
@@ -2034,7 +2629,8 @@ $sectionmap = array(
 	'ESTATS' => 'estats',
 	'CONFIG' => 'config',
 	'COIN' => 'coin',
-	'USBSTATS' => 'usbstats');
+	'USBSTATS' => 'usbstats',
+	'MM' => 'mm');
 #
 function joinfields($section1, $section2, $join, $results)
 {
@@ -2211,12 +2807,27 @@ function joinall($section1, $section2, $results)
 #
 function joinsections($sections, $results, $errors)
 {
- global $sectionmap;
+ global $sectionmap, $ect;
+
+ // GPU's don't have Name,ID fields - so create them
+ foreach ($results as $section => $res)
+	foreach ($res as $rig => $result)
+		foreach ($result as $name => $fields)
+		{
+			$subname = preg_replace('/\d/', '', $name);
+			if ($subname == 'GPU' and isset($result[$name]['GPU']))
+			{
+				$results[$section][$rig][$name]['Name'] = 'GPU';
+				$results[$section][$rig][$name]['ID'] = $result[$name]['GPU'];
+			}
+		}
 
  foreach ($sections as $section => $fields)
-	if ($section != 'DATE' && !isset($sectionmap[$section]))
+ {
+	$sec = preg_replace('/\d/', '', $section);
+	if ($sec != 'DATE' && $sec != $ect && !isset($sectionmap[$sec]))
 	{
-		$both = explode('+', $section, 2);
+		$both = explode('+', $sec, 2);
 		if (count($both) > 1)
 		{
 			switch($both[0])
@@ -2229,11 +2840,11 @@ function joinsections($sections, $results, $errors)
 				case 'EDEVS':
 				case 'CONFIG':
 				case 'COIN':
-					$sectionmap[$section] = $section;
-					$results[$section] = joinall($both[0], $both[1], $results);
+					$sectionmap[$sec] = $sec;
+					$results[$sec] = joinall($both[0], $both[1], $results);
 					break;
 				default:
-					$errors[] = "Error: Invalid section '$section'";
+					$errors[] = "Error: Invalid section '$section/$sec'";
 					break;
 				}
 				break;
@@ -2245,17 +2856,17 @@ function joinsections($sections, $results, $errors)
 				case 'DEVDETAILS':
 				case 'USBSTATS':
 					$join = array('Name', 'ID');
-					$sectionmap[$section] = $section;
-					$results[$section] = joinfields($both[0], $both[1], $join, $results);
+					$sectionmap[$sec] = $sec;
+					$results[$sec] = joinfields($both[0], $both[1], $join, $results);
 					break;
 				case 'STATS':
 				case 'ESTATS':
 					$join = array('L' => array('Name','ID'), 'R' => array('ID'));
-					$sectionmap[$section] = $section;
-					$results[$section] = joinlr($both[0], $both[1], $join, $results);
+					$sectionmap[$sec] = $sec;
+					$results[$sec] = joinlr($both[0], $both[1], $join, $results);
 					break;
 				default:
-					$errors[] = "Error: Invalid section '$section'";
+					$errors[] = "Error: Invalid section '$section/$sec'";
 					break;
 				}
 				break;
@@ -2264,33 +2875,41 @@ function joinsections($sections, $results, $errors)
 				{
 				case 'STATS':
 					$join = array('L' => array(':POOL','POOL'), 'R' => array('ID'));
-					$sectionmap[$section] = $section;
-					$results[$section] = joinlr($both[0], $both[1], $join, $results);
+					$sectionmap[$sec] = $sec;
+					$results[$sec] = joinlr($both[0], $both[1], $join, $results);
 					break;
 				default:
-					$errors[] = "Error: Invalid section '$section'";
+					$errors[] = "Error: Invalid section '$section/$sec'";
 					break;
 				}
 				break;
 			default:
-				$errors[] = "Error: Invalid section '$section'";
+				$errors[] = "Error: Invalid section '$section/$sec'";
 				break;
 			}
 		}
 		else
-			$errors[] = "Error: Invalid section '$section'";
+			$errors[] = "Error: Invalid section '$section/$sec'";
 	}
-
+ }
  return array($results, $errors);
 }
 #
 function secmatch($section, $field)
 {
- if ($section == $field)
+ $sec = preg_replace('/\d/', '', $section);
+ $fld = preg_replace('/\d/', '', $field);
+
+ if ($sec == $fld)
 	return true;
 
- if (($section == 'DEVS' || $section == 'EDEVS')
- &&  ($field == 'PGA' || $field == 'ASC'))
+ # API estats returns data as STATS
+ if ($sec == 'ESTATS' && $fld == 'STATS')
+	return true;
+
+ # API devs and edevs return the device type
+ if (($sec == 'DEVS' || $sec == 'EDEVS')
+ &&  ($fld == 'GPU' || $fld == 'PGA' || $fld == 'ASC'))
 	return true;
 
  return false;
@@ -2470,6 +3089,10 @@ function docompare($row, $test)
 	return (strcasecmp($val, $test[2]) > 0);
  case 'ge':
 	return (strcasecmp($val, $test[2]) >= 0);
+ case 'sub':
+	return (strcasecmp(substr($val, 0, strlen($test[2])), $test[2]) == 0);
+ case '!sub':
+	return (strcasecmp(substr($val, 0, strlen($test[2])), $test[2]) != 0);
  default:
 	return true;
  }
@@ -2563,7 +3186,7 @@ function dogen($ext, $wg, $gname, $section, &$res, &$fields)
 			}
 	}
 }
-#
+# $section is the full name including digits
 function processext($ext, $section, $res, &$fields)
 {
  global $allowgen;
@@ -2648,10 +3271,60 @@ function processext($ext, $section, $res, &$fields)
 
  return processcompare('having', $ext, $section, $res);
 }
+# Avalon Error values in ECMM and ECHU
+function showect()
+{
+ $ecv = array(
+	'x00001' => 'Idle W',
+	'x00002' => 'MMCRCFailed W',
+	'x00004' => 'NoFan F',
+	'x00008' => 'Lock W',
+	'x00010' => 'APIfifoOverflow W',
+	'x00020' => 'RBOverflow W',
+	'x00040' => 'TooHot F',
+	'x00080' => 'HotBefore W',
+	'x00100' => 'LoopFailed F',
+	'x00200' => 'CoreTestFailed W',
+	'x00400' => 'InvalidPMU F',
+	'x00800' => 'PGFailed F',
+	'x01000' => 'NTCErr F',
+	'x02000' => 'VolErr F',
+	'x04000' => 'VCoreERR F',
+	'x08000' => 'PMUCRCFailed W',
+	'x10000' => 'InvalidPLLValue W',
+	'x20000' => 'HUFailed W');
+
+ otherrow("<td class=h colspan=9>ECHU and ECMM error codes (mouse over)</td>");
+ $count = 0;
+ foreach ($ecv as $val => $name)
+ {
+	if (($count % 9) == 0)
+	{
+		if ($count > 0)
+		{
+			endrow();
+		}
+		newrow();
+	}
+	switch (substr($name, -2))
+	{
+	 case ' W':
+		 $name .= 'arning';
+		 break;
+	 case ' F':
+		 $name .= 'atal';
+		 break;
+	}
+	echo "<td><span title='$name'>&nbsp;$val&nbsp;</span></td>";
+
+	$count++;
+ }
+ endrow();
+}
 #
 function processcustompage($pagename, $sections, $sum, $ext, $namemap)
 {
- global $sectionmap;
+ global $sectionmap, $ect;
  global $miner, $port;
  global $rigs, $error;
  global $warnfont, $warnoff;
@@ -2665,15 +3338,16 @@ function processcustompage($pagename, $sections, $sum, $ext, $namemap)
 	$all = explode('+', $section);
 	foreach ($all as $section)
 	{
-		if (isset($sectionmap[$section]))
+		$sec = preg_replace('/\d/', '', $section);
+		if (isset($sectionmap[$sec]))
 		{
-			$cmd = $sectionmap[$section];
+			$cmd = $sectionmap[$sec];
 			if (!isset($cmds[$cmd]))
 				$cmds[$cmd] = 1;
 		}
 		else
-			if ($section != 'DATE')
-				$errors[] = "Error: unknown section '$section' in custom summary page '$pagename'";
+			if ($sec != 'DATE' && $sec != $ect)
+				$errors[] = "Error: unknown section '$section/$sec' in custom summary page '$pagename'";
 	}
  }
 
@@ -2726,7 +3400,8 @@ function processcustompage($pagename, $sections, $sum, $ext, $namemap)
 	$first = true;
 	foreach ($sections as $section => $fields)
 	{
-		if ($section === 'DATE')
+		$sec = preg_replace('/\d/', '', $section);
+		if ($sec === 'DATE')
 		{
 			if ($shownsomething)
 				otherrow('<td>&nbsp;</td>');
@@ -2739,7 +3414,17 @@ function processcustompage($pagename, $sections, $sum, $ext, $namemap)
 			continue;
 		}
 
-		if ($section === 'RIGS')
+		if ($sec === $ect)
+		{
+			newtable();
+			showect();
+			endtable();
+			// On top of the next table
+			$shownsomething = false;
+			continue;
+		}
+
+		if ($sec === 'RIGS')
 		{
 			if ($shownsomething)
 				otherrow('<td>&nbsp;</td>');
@@ -2751,22 +3436,23 @@ function processcustompage($pagename, $sections, $sum, $ext, $namemap)
 			continue;
 		}
 
-		if (isset($results[$sectionmap[$section]]))
+		if (isset($results[$sectionmap[$sec]]))
 		{
+			// use the full section name
 			if (isset($ext[$section]['fmt']))
 				$cf = $ext[$section]['fmt'];
 			else
 				$cf = NULL;
 
-			$rigresults = processext($ext, $section, $results[$sectionmap[$section]], $fields);
+			$rigresults = processext($ext, $section, $results[$sectionmap[$sec]], $fields);
 
 			$showfields = array();
 			$showhead = array();
 			foreach ($fields as $field)
 				foreach ($rigresults as $result)
-					foreach ($result as $sec => $row)
+					foreach ($result as $secn => $row)
 					{
-						$secname = preg_replace('/\d/', '', $sec);
+						$secname = preg_replace('/\d/', '', $secn);
 						if (secmatch($section, $secname))
 						{
 							if ($field === '*')

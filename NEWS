@@ -1,3 +1,15 @@
+Version 4.12.0 - 16th September 2021
+
+- Handle gcc 7+ issues/warnings in main and gekko code
+- Pull in all Gekko code from https://github.com/vthoang/cgminer
+- Pull in all available avalon updates, Avalon8
+- Update miner.php v42.14
+- Update information for latest git source
+- Add Gekko linux support for BM1397 (GSF - compacf)
+- General Gekko code updates
+- New Windows 10 build instructions
+- Gekko now tested on Windows 10 also
+
 Version 4.11.1 - 16th August 2018
 
 - Alias T1factory option to noauto.
