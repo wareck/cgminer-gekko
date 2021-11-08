@@ -313,10 +313,10 @@ fi
 AM_CONDITIONAL([HAS_BITFURY16], [test x$bitfury16 = xyes])
 
 bitmain_soc="no"
-bitmain_R4="no"
-bitmain_S9="no"
-bitmain_T9="no"
-bitmain_T9P="no"
+#bitmain_R4="no"
+#bitmain_S9="no"
+#bitmain_T9="no"
+#bitmain_T9P="no"
 
 AC_ARG_ENABLE([bitmain_soc],
 	[AC_HELP_STRING([--enable-bitmain_soc],[Compile support for Bitmain ASICs STANDALONE(default disabled)])],
@@ -583,7 +583,7 @@ if test "x$curses" = "xno"; then
 else
 	AC_SEARCH_LIBS(setupterm, pdcurses ncurses pdcurses, [
 		curses=yes
-		cursesmsg="FOUND: ${ac_cv_search_addstr}"
+		cursesmsg="FOUND: ${ac_cv_search_setupterm}"
 		AC_DEFINE([HAVE_CURSES], [1], [Defined to 1 if curses TUI support is wanted])
 	], [
 		if test "x$curses" = "xyes"; then
@@ -1026,7 +1026,7 @@ fi
 
 
 #Add any new device to this, along with a no on the end of the test
-if test "x$avalon$avalon2$avalon4$avalon7$avalon8$avalon_miner$bab$bflsc$bitforce$bitfury$bitfury16$bitmain_soc$gekko$blockerupter$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$dragonmint_t1" = xnonononononononnoononononononononononononononononononnoonono; then
+if test "x$avalon$avalon2$avalon4$avalon7$avalon8$avalon_miner$bab$bflsc$bitforce$bitfury$bitfury16$bitmain_soc$blockerupter$gekko$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$dragonmint_t1" = xnonononononononononononononononononononononononononononono; then
 	echo
 	AC_MSG_ERROR([No mining devices configured in])
 	echo
