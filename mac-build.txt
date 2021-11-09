@@ -10,7 +10,7 @@ this should take about 5-10 minutes on a recent mac with MBit internet
 
 Build cgminer:
 
- brew tap kanoi/cgminer
+ brew tap wareck/cgminer
  brew install cgminer
 
 

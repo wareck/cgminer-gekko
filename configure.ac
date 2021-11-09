@@ -11,7 +11,7 @@ m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([cgminer], [v_ver], [kano])
+AC_INIT([cgminer], [v_ver], [kernel@kolivas.org])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
@@ -313,10 +313,10 @@ fi
 AM_CONDITIONAL([HAS_BITFURY16], [test x$bitfury16 = xyes])
 
 bitmain_soc="no"
-#bitmain_R4="no"
-#bitmain_S9="no"
-#bitmain_T9="no"
-#bitmain_T9P="no"
+bitmain_R4="no"
+bitmain_S9="no"
+bitmain_T9="no"
+bitmain_T9P="no"
 
 AC_ARG_ENABLE([bitmain_soc],
 	[AC_HELP_STRING([--enable-bitmain_soc],[Compile support for Bitmain ASICs STANDALONE(default disabled)])],
@@ -427,7 +427,7 @@ if test "x$drillbit" = xyes; then
 fi
 AM_CONDITIONAL([HAS_DRILLBIT], [test x$drillbit = xyes])
 
-gekko="yes"
+gekko="no"
 
 AC_ARG_ENABLE([gekko],
         [AC_HELP_STRING([--disable-gekko],[Compile support for GekkoScience (default enabled)])],
