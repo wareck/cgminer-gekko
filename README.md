@@ -45,8 +45,9 @@ to build this specific code on linux:
 
 	sudo apt-get update -y
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
-	libjansson-dev libncurses5-dev -y
+	libjansson-dev libncurses5-dev libusb-1.0-0-dev -y
 	git clone https://github.com/wareck/cgminer-gekko.git
+
 	cd cgminer-gekko
 	sudo usermod -a -G dialout,plugdev $USER
 	sudo cp 01-cgminer.rules /etc/udev/rules.d/
@@ -55,12 +56,6 @@ to build this specific code on linux:
 	make
 	make install
 	
-If you use Raspberry Os, with the last version (Bulleyes) :
-	CFLAGS="-O2 -fcommon -march=native" ./autogen.sh
-	./configure --enable-gekko
-	make
-	make install
-
 ### Option Summary ###
 
 ```
