@@ -2,15 +2,20 @@
 ##  CGminer 4.12.0 GekkoScience Compac, 2pac & Newpack BM1384 & CompacF #
 ### #####################################################################
 
-This is a cgminer 4.11.1 with support for GekkoScience Compac, CompacF, 2pac.
+This is cgminer 4.12.0 with support for GekkoScience Compac, CompacF, 2pac.
 
 This software is forked from cgminer 4.11.1 original from ckolivas.
+
+Then i added v.thoang gekko drivers
+
+I also adapted this code to my own material / miners / computer
 
 (you can refer to original documentation to docs/README)
 
 ### GekkoScience compac Usb miner ##
-
-![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko.jpg)
+<p align="center">
+<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko.jpg">
+</p>
 
 ### GekkoScience 2pac Usb miner ##
 
@@ -75,7 +80,7 @@ You can use your miner with last extranonce support for nicehash by adding #xnsu
 	
 ## Credits
 ```
-Kanoi    : https://github.com/kanoi/cgminer (optimized code and driver fix)
+Kanoi    : https://github.com/kanoi/cgminer.git (code update to 4.12.0 and gekko driver improvement)
 ckolivas : https://github.com/ckolivas/cgminer.git (original cgminer code)
 vthoang  : https://github.com/vthoang/cgminer.git (gekko driver)
 nicehash : https://github.com/nicehash/cgminer-ckolivas.git (nicheash extranonce)
