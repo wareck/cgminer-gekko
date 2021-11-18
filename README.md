@@ -18,20 +18,24 @@ I also adapted this code to my own material / miners / computer
 </p>
 
 ### GekkoScience 2pac Usb miner ##
-
-![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg)
+<p align="center">
+<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg">
+</p>
 
 ### GekkoScience Newpac Usb miner ##
-
-![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg)
+<p align="center">
+<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg">
+</p>
 
 ### GekkoScience CompacF Usb miner ##
-
-![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/compacf.png)
+<p align="center">
+<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/compacf.png">
+</p>
 
 ### GekkoScience Terminus r606 ##
-
-![](https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/terminus.jpg)
+<p align="center">
+<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/terminus.jpg">
+</p>
 
 This software use a slighty moddified driver from novak's gekko driver.
 
