@@ -46,7 +46,6 @@ dnl Make sure anyone changing configure.ac/Makefile.am has a clue
 AM_MAINTAINER_MODE
 
 dnl Checks for programs
-CFLAGS+=" -std=gnu11"
 AC_PROG_CC
 gl_EARLY
 AC_PROG_GCC_TRADITIONAL
@@ -86,6 +85,9 @@ esac
 
 #CFLAGS="$CFLAGS -Wimplicit-fallthrough=0"
 #^ causes problem on gcc 4.9 - pass in from CFLAG if needed
+
+#add CFLAGS "-fcommon" otherwise cause issue compilation on gcc 10.x (raspberry BullEyes)
+CFLAGS+=" -std=gnu11 -fcommon"
 
 case $target in
   *-*-linux-gnu*)
