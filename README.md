@@ -54,6 +54,12 @@ to build this specific code on linux:
 	./configure --enable-gekko
 	make
 	make install
+	
+If you use Raspberry Os, with the last version (Bulleyes) :
+	CFLAGS="-O2 -fcommon -march=native" ./autogen.sh
+	./configure --enable-gekko
+	make
+	make install
 
 ### Option Summary ###
 
