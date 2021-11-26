@@ -432,7 +432,7 @@ AM_CONDITIONAL([HAS_DRILLBIT], [test x$drillbit = xyes])
 gekko="no"
 
 AC_ARG_ENABLE([gekko],
-        [AC_HELP_STRING([--disable-gekko],[Compile support for GekkoScience (default enabled)])],
+        [AC_HELP_STRING([--enable-gekko],[Compile support for GekkoScience (default disabled)])],
         [gekko=$enableval]
         )
 if test "x$gekko" = xyes; then
