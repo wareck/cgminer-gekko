@@ -632,7 +632,7 @@ if test "x$want_usbutils" != xfalse; then
 	dlibusb="no"
 	AC_DEFINE([USE_USBUTILS], [1], [Defined to 1 if usbutils support required])
 	AC_ARG_WITH([system-libusb],
-		[AC_HELP_STRING([--with-system-libusb],[Not recommended! Compile against dynamic system libusb. (Default use included static libusb)])],
+		[AC_HELP_STRING([--with-system-libusb],[Compile against dynamic system libusb. (Default use included static libusb)])],
 		[dlibusb=$withval]
 	)
 
