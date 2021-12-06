@@ -831,9 +831,9 @@ echo "Configuration Options Summary:"
 echo
 
 if test "x$libcurl" != xno; then
-	echo "  libcurl(GBT).: Enabled: $LIBCURL_LIBS"
+	echo "  libcurl(GBT).........: Enabled: $LIBCURL_LIBS"
 else
-	echo "  libcurl(GBT).: Disabled"
+	echo "  libcurl(GBT).........: Disabled"
 fi
 
 if test "x$libsystemd" != xno; then
@@ -841,6 +841,13 @@ if test "x$libsystemd" != xno; then
 else
 	echo "  libsystemd...........: Disabled"
 fi
+
+if test "x$dlibusb" != xno; then
+        echo "  libusb_system........: Enabled: $LIBUSB_LIBS"
+else
+	echo "  libusb_system........: Disabled"
+fi
+
 
 echo "  curses.TUI...........: $cursesmsg"
 
