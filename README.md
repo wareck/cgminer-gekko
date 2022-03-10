@@ -55,7 +55,7 @@ to build this specific code on linux:
 	CFLAGS="-O2 -march=native" ./autogen.sh
 	./configure --enable-gekko
 	make
-	make install
+	sudo make install
 	
 ### Option Summary ###
 
