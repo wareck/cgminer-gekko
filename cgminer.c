@@ -2633,6 +2633,9 @@ static char *opt_verusage_and_exit(const char *extra)
 #ifdef USE_AVALON_MINER
 		"avalon miner"
 #endif
+#ifdef USE_BAB
+                "BaB "
+#endif
 #ifdef USE_BFLSC
 		"bflsc "
 #endif
@@ -2644,6 +2647,12 @@ static char *opt_verusage_and_exit(const char *extra)
 #endif
 #ifdef USE_BITFURY16
 		"bitfury16 "
+#endif
+#ifdef USE_BITMINE_A1
+                "Bitmine.A1 "
+#endif
+#ifdef USE_BLOCKERUPTER
+		"Blockerupter "
 #endif
 #ifdef USE_COINTERRA
 		"cointerra "
@@ -2668,9 +2677,6 @@ static char *opt_verusage_and_exit(const char *extra)
 #endif
 #ifdef USE_KNC
 		"KnC "
-#endif
-#ifdef USE_BAB
-		"BaB "
 #endif
 #ifdef USE_MINION
 		"minion "
