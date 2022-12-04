@@ -1088,26 +1088,26 @@ static void modminer_fpga_shutdown(struct thr_info *thr)
 	thr->cgpu_data = NULL;
 }
 
-static char *modminer_set_device(struct cgpu_info *modminer, char *option, char *setting, char *replybuf)
+static char *modminer_set_device(struct cgpu_info *modminer, char *option, char *setting, char *replybuf, size_t siz)
 {
 	const char *ret;
 	int val;
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "clock: range %d-%d and a multiple of 2",
+		snprintf(replybuf, siz, "clock: range %d-%d and a multiple of 2",
 					MODMINER_MIN_CLOCK, MODMINER_MAX_CLOCK);
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "clock") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing clock setting");
+			snprintf(replybuf, siz, "missing clock setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < MODMINER_MIN_CLOCK || val > MODMINER_MAX_CLOCK || (val & 1) != 0) {
-			sprintf(replybuf, "invalid clock: '%s' valid range %d-%d and a multiple of 2",
+			snprintf(replybuf, siz, "invalid clock: '%s' valid range %d-%d and a multiple of 2",
 						setting, MODMINER_MIN_CLOCK, MODMINER_MAX_CLOCK);
 			return replybuf;
 		}
@@ -1116,13 +1116,13 @@ static char *modminer_set_device(struct cgpu_info *modminer, char *option, char 
 
 		ret = modminer_delta_clock(modminer->thr[0], val, false, true);
 		if (ret) {
-			sprintf(replybuf, "Set clock failed: %s", ret);
+			snprintf(replybuf, siz, "Set clock failed: %s", ret);
 			return replybuf;
 		} else
 			return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

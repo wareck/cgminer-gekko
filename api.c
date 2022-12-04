@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Andrew Smith
+ * Copyright 2011-2022 Andrew Smith
  * Copyright 2011-2015,2018 Con Kolivas
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1438,6 +1438,10 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 #ifdef HAVE_AN_FPGA
 	int pga;
 #endif
+#if !defined(HAVE_AN_ASIC) || !defined(HAVE_AN_FPGA)
+	int test;
+	test=0;
+#endif
 	int i;
 
 	if (isjson)
@@ -1505,7 +1509,10 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 #ifdef HAVE_AN_FPGA
 						, pga
 #endif
-						);
+#if !defined(HAVE_AN_ASIC) || !defined(HAVE_AN_FPGA)
+						, test
+#endif
+					);
 					break;
 				case PARAM_CMD:
 					snprintf(buf, LIMSIZ, codes[i].description, JSON_COMMAND);
@@ -3656,7 +3663,7 @@ static void pgaset(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 	if (!drv->set_device)
 		message(io_data, MSG_PGANOSET, id, NULL, isjson);
 	else {
-		char *ret = drv->set_device(cgpu, opt, set, buf);
+		char *ret = drv->set_device(cgpu, opt, set, buf, sizeof(buf));
 		if (ret) {
 			if (strcasecmp(opt, "help") == 0)
 				message(io_data, MSG_PGAHELP, id, ret, isjson);
@@ -3998,7 +4005,7 @@ static void ascset(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 	if (!drv->set_device)
 		message(io_data, MSG_ASCNOSET, id, NULL, isjson);
 	else {
-		char *ret = drv->set_device(cgpu, opt, set, buf);
+		char *ret = drv->set_device(cgpu, opt, set, buf, sizeof(buf));
 		if (ret) {
 			if (strcasecmp(opt, "help") == 0)
 				message(io_data, MSG_ASCHELP, id, ret, isjson);

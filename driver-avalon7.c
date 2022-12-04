@@ -2465,25 +2465,25 @@ char *set_avalon7_factory_info(struct cgpu_info *avalon7, char *arg)
 	return NULL;
 }
 
-static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *setting, char *replybuf)
+static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *setting, char *replybuf, size_t siz)
 {
 	unsigned int val;
 	struct avalon7_info *info = avalon7->device_data;
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "pdelay|fan|frequency|led|voltage");
+		snprintf(replybuf, siz, "pdelay|fan|frequency|led|voltage");
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "pdelay") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing polling delay setting");
+			snprintf(replybuf, siz, "missing polling delay setting");
 			return replybuf;
 		}
 
 		val = (unsigned int)atoi(setting);
 		if (val < 1 || val > 65535) {
-			sprintf(replybuf, "invalid polling delay: %d, valid range 1-65535", val);
+			snprintf(replybuf, siz, "invalid polling delay: %d, valid range 1-65535", val);
 			return replybuf;
 		}
 
@@ -2497,12 +2497,12 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 
 	if (strcasecmp(option, "fan") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing fan value");
+			snprintf(replybuf, siz, "missing fan value");
 			return replybuf;
 		}
 
 		if (set_avalon7_fan(setting)) {
-			sprintf(replybuf, "invalid fan value, valid range 0-100");
+			snprintf(replybuf, siz, "invalid fan value, valid range 0-100");
 			return replybuf;
 		}
 
@@ -2515,7 +2515,7 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 
 	if (strcasecmp(option, "frequency") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing frequency value");
+			snprintf(replybuf, siz, "missing frequency value");
 			return replybuf;
 		}
 
@@ -2526,18 +2526,18 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 		int val_led = -1;
 
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing module_id setting");
+			snprintf(replybuf, siz, "missing module_id setting");
 			return replybuf;
 		}
 
 		sscanf(setting, "%d-%d", &val, &val_led);
 		if (val < 1 || val >= AVA7_DEFAULT_MODULARS) {
-			sprintf(replybuf, "invalid module_id: %d, valid range 1-%d", val, AVA7_DEFAULT_MODULARS);
+			snprintf(replybuf, siz, "invalid module_id: %d, valid range 1-%d", val, AVA7_DEFAULT_MODULARS);
 			return replybuf;
 		}
 
 		if (!info->enable[val]) {
-			sprintf(replybuf, "the current module was disabled %d", val);
+			snprintf(replybuf, siz, "the current module was disabled %d", val);
 			return replybuf;
 		}
 
@@ -2545,7 +2545,7 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 			info->led_indicator[val] = !info->led_indicator[val];
 		else {
 			if (val_led < 0 || val_led > 1) {
-				sprintf(replybuf, "invalid LED status: %d, valid value 0|1", val_led);
+				snprintf(replybuf, siz, "invalid LED status: %d, valid value 0|1", val_led);
 				return replybuf;
 			}
 
@@ -2562,7 +2562,7 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 
 	if (strcasecmp(option, "voltage") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing voltage value");
+			snprintf(replybuf, siz, "missing voltage value");
 			return replybuf;
 		}
 
@@ -2571,7 +2571,7 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 
 	if (strcasecmp(option, "factory") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing factory info");
+			snprintf(replybuf, siz, "missing factory info");
 			return replybuf;
 		}
 
@@ -2580,13 +2580,13 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 
 	if (strcasecmp(option, "reboot") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing reboot value");
+			snprintf(replybuf, siz, "missing reboot value");
 			return replybuf;
 		}
 
 		sscanf(setting, "%d", &val);
 		if (val < 1 || val >= AVA7_DEFAULT_MODULARS) {
-			sprintf(replybuf, "invalid module_id: %d, valid range 1-%d", val, AVA7_DEFAULT_MODULARS);
+			snprintf(replybuf, siz, "invalid module_id: %d, valid range 1-%d", val, AVA7_DEFAULT_MODULARS);
 			return replybuf;
 		}
 
@@ -2595,7 +2595,7 @@ static char *avalon7_set_device(struct cgpu_info *avalon7, char *option, char *s
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

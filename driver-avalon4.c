@@ -2891,19 +2891,19 @@ char *set_avalon4_device_freq(struct cgpu_info *avalon4, char *arg)
 	return NULL;
 }
 
-static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *setting, char *replybuf)
+static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *setting, char *replybuf, size_t siz)
 {
 	int val, i, j;
 	struct avalon4_info *info = avalon4->device_data;
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "led|fan|voltage|frequency|pdelay|freezesafe");
+		snprintf(replybuf, siz, "led|fan|voltage|frequency|pdelay|freezesafe");
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "freezesafe") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing freezesafe mode setting");
+			snprintf(replybuf, siz, "missing freezesafe mode setting");
 			return replybuf;
 		}
 
@@ -2919,13 +2919,13 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 
 	if (strcasecmp(option, "pdelay") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing polling delay setting");
+			snprintf(replybuf, siz, "missing polling delay setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 1 || val > 65535) {
-			sprintf(replybuf, "invalid polling delay: %d, valid range 1-65535", val);
+			snprintf(replybuf, siz, "invalid polling delay: %d, valid range 1-65535", val);
 			return replybuf;
 		}
 
@@ -2939,12 +2939,12 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 
 	if (strcasecmp(option, "fan") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing fan value");
+			snprintf(replybuf, siz, "missing fan value");
 			return replybuf;
 		}
 
 		if (set_avalon4_fan(setting)) {
-			sprintf(replybuf, "invalid fan value, valid range 0-100");
+			snprintf(replybuf, siz, "invalid fan value, valid range 0-100");
 			return replybuf;
 		}
 
@@ -2957,12 +2957,12 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 
 	if (strcasecmp(option, "frequency") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing frequency value");
+			snprintf(replybuf, siz, "missing frequency value");
 			return replybuf;
 		}
 
 		if (set_avalon4_device_freq(avalon4, setting)) {
-			sprintf(replybuf, "invalid frequency value, valid range %d-%d",
+			snprintf(replybuf, siz, "invalid frequency value, valid range %d-%d",
 				AVA4_DEFAULT_FREQUENCY_MIN, AVA4_DEFAULT_FREQUENCY_MAX);
 			return replybuf;
 		}
@@ -2978,18 +2978,18 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 		int val_led = -1;
 
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing module_id setting");
+			snprintf(replybuf, siz, "missing module_id setting");
 			return replybuf;
 		}
 
 		sscanf(setting, "%d-%d", &val, &val_led);
 		if (val < 1 || val >= AVA4_DEFAULT_MODULARS) {
-			sprintf(replybuf, "invalid module_id: %d, valid range 1-%d", val, AVA4_DEFAULT_MODULARS);
+			snprintf(replybuf, siz, "invalid module_id: %d, valid range 1-%d", val, AVA4_DEFAULT_MODULARS);
 			return replybuf;
 		}
 
 		if (!info->enable[val]) {
-			sprintf(replybuf, "the current module was disabled %d", val);
+			snprintf(replybuf, siz, "the current module was disabled %d", val);
 			return replybuf;
 		}
 
@@ -2997,7 +2997,7 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 			info->led_red[val] = !info->led_red[val];
 		else {
 			if (val_led < 0 || val_led > 1) {
-				sprintf(replybuf, "invalid LED status: %d, valid value 0|1", val_led);
+				snprintf(replybuf, siz, "invalid LED status: %d, valid value 0|1", val_led);
 				return replybuf;
 			}
 
@@ -3016,35 +3016,35 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 		int val_mod, val_volt, val_ch = -1, val_offset = -1;
 
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing voltage value");
+			snprintf(replybuf, siz, "missing voltage value");
 			return replybuf;
 		}
 
 		sscanf(setting, "%d-%d-%d-%d", &val_mod, &val_volt, &val_ch, &val_offset);
 		if (val_mod < 0 || val_mod >= AVA4_DEFAULT_MODULARS ||
 		    val_volt < AVA4_DEFAULT_VOLTAGE_MIN || val_volt > AVA4_DEFAULT_VOLTAGE_MAX) {
-			sprintf(replybuf, "invalid module_id or voltage value, valid module_id range %d-%d, valid voltage range %d-%d",
+			snprintf(replybuf, siz, "invalid module_id or voltage value, valid module_id range %d-%d, valid voltage range %d-%d",
 				0, AVA4_DEFAULT_MODULARS,
 				AVA4_DEFAULT_VOLTAGE_MIN, AVA4_DEFAULT_VOLTAGE_MAX);
 			return replybuf;
 		}
 
 		if ((val_ch != -1) && (val_ch < -1 || val_ch >= AVA4_DEFAULT_MINER_MAX)) {
-			sprintf(replybuf, "invalid miner_id,  valid miner_id range %d-%d",
+			snprintf(replybuf, siz, "invalid miner_id,  valid miner_id range %d-%d",
 				0, AVA4_DEFAULT_MINER_MAX - 1);
 			return replybuf;
 		}
 
 		if ((val_offset != -1) && ((val_volt + val_offset) < AVA4_DEFAULT_VOLTAGE_MIN ||
 					((val_volt + val_offset) > AVA4_DEFAULT_VOLTAGE_MAX))) {
-			sprintf(replybuf, "invalid val_offset,  valid val_offset range %d-%d",
+			snprintf(replybuf, siz, "invalid val_offset,  valid val_offset range %d-%d",
 					AVA4_DEFAULT_VOLTAGE_MIN - val_volt,
 					AVA4_DEFAULT_VOLTAGE_MAX - val_volt);
 			return replybuf;
 		}
 
 		if (!info->enable[val_mod]) {
-			sprintf(replybuf, "the current module was disabled %d", val_mod);
+			snprintf(replybuf, siz, "the current module was disabled %d", val_mod);
 			return replybuf;
 		}
 
@@ -3086,7 +3086,7 @@ static char *avalon4_set_device(struct cgpu_info *avalon4, char *option, char *s
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

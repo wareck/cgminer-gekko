@@ -350,7 +350,7 @@ struct device_drv {
 	struct api_data *(*get_api_debug)(struct cgpu_info *);
 	bool (*get_stats)(struct cgpu_info *);
 	void (*identify_device)(struct cgpu_info *); // e.g. to flash a led
-	char *(*set_device)(struct cgpu_info *, char *option, char *setting, char *replybuf);
+	char *(*set_device)(struct cgpu_info *, char *option, char *setting, char *replybuf, size_t siz);
 
 	// Thread-specific functions
 	bool (*thread_prepare)(struct thr_info *);

@@ -1632,12 +1632,12 @@ static void avalon_shutdown(struct thr_info *thr)
 	avalon->works = NULL;
 }
 
-static char *avalon_set_device(struct cgpu_info *avalon, char *option, char *setting, char *replybuf)
+static char *avalon_set_device(struct cgpu_info *avalon, char *option, char *setting, char *replybuf, size_t siz)
 {
 	int val;
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "freq: range %d-%d millivolts: range %d-%d",
+		snprintf(replybuf, siz, "freq: range %d-%d millivolts: range %d-%d",
 					AVALON_MIN_FREQUENCY, AVALON_MAX_FREQUENCY,
 					BITBURNER_MIN_COREMV, BITBURNER_MAX_COREMV);
 		return replybuf;
@@ -1645,18 +1645,18 @@ static char *avalon_set_device(struct cgpu_info *avalon, char *option, char *set
 
 	if (strcasecmp(option, "millivolts") == 0 || strcasecmp(option, "mv") == 0) {
 		if (!is_bitburner(avalon)) {
-			sprintf(replybuf, "%s cannot set millivolts", avalon->drv->name);
+			snprintf(replybuf, siz, "%s cannot set millivolts", avalon->drv->name);
 			return replybuf;
 		}
 
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing millivolts setting");
+			snprintf(replybuf, siz, "missing millivolts setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < BITBURNER_MIN_COREMV || val > BITBURNER_MAX_COREMV) {
-			sprintf(replybuf, "invalid millivolts: '%s' valid range %d-%d",
+			snprintf(replybuf, siz, "invalid millivolts: '%s' valid range %d-%d",
 						setting, BITBURNER_MIN_COREMV, BITBURNER_MAX_COREMV);
 			return replybuf;
 		}
@@ -1664,20 +1664,20 @@ static char *avalon_set_device(struct cgpu_info *avalon, char *option, char *set
 		if (bitburner_set_core_voltage(avalon, val))
 			return NULL;
 		else {
-			sprintf(replybuf, "Set millivolts failed");
+			snprintf(replybuf, siz, "Set millivolts failed");
 			return replybuf;
 		}
 	}
 
 	if (strcasecmp(option, "freq") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing freq setting");
+			snprintf(replybuf, siz, "missing freq setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < AVALON_MIN_FREQUENCY || val > AVALON_MAX_FREQUENCY) {
-			sprintf(replybuf, "invalid freq: '%s' valid range %d-%d",
+			snprintf(replybuf, siz, "invalid freq: '%s' valid range %d-%d",
 						setting, AVALON_MIN_FREQUENCY, AVALON_MAX_FREQUENCY);
 			return replybuf;
 		}
@@ -1686,7 +1686,7 @@ static char *avalon_set_device(struct cgpu_info *avalon, char *option, char *set
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

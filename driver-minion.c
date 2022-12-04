@@ -2698,14 +2698,14 @@ unalloc:
 	free(minioncgpu);
 }
 
-static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *setting, char *replybuf)
+static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *setting, char *replybuf, size_t siz)
 {
 	struct minion_info *minioninfo = (struct minion_info *)(minioncgpu->device_data);
 	int chip, val;
 	char *colon;
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "reset: chip 0-%d freq: 0-%d:%d-%d "
+		snprintf(replybuf, siz, "reset: chip 0-%d freq: 0-%d:%d-%d "
 				  "ledcount: 0-100 ledlimit: 0-200 "
 				  "spidelay: 0-9999 spireset i|s0-9999 "
 				  "spisleep: 0-9999",
@@ -2717,20 +2717,20 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 
 	if (strcasecmp(option, "reset") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing chip to reset");
+			snprintf(replybuf, siz, "missing chip to reset");
 			return replybuf;
 		}
 
 		chip = atoi(setting);
 		if (chip < 0 || chip >= minioninfo->chips) {
-			sprintf(replybuf, "invalid reset: chip '%s' valid range 0-%d",
+			snprintf(replybuf, siz, "invalid reset: chip '%s' valid range 0-%d",
 					  setting,
 					  minioninfo->chips);
 			return replybuf;
 		}
 
 		if (!minioninfo->has_chip[chip]) {
-			sprintf(replybuf, "unable to reset chip %d - chip disabled",
+			snprintf(replybuf, siz, "unable to reset chip %d - chip disabled",
 					  chip);
 			return replybuf;
 		}
@@ -2741,39 +2741,39 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 	// This sets up a freq step up/down to the given freq without a reset
 	if (strcasecmp(option, "freq") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing chip:freq");
+			snprintf(replybuf, siz, "missing chip:freq");
 			return replybuf;
 		}
 
 		colon = strchr(setting, ':');
 		if (!colon) {
-			sprintf(replybuf, "missing ':' for chip:freq");
+			snprintf(replybuf, siz, "missing ':' for chip:freq");
 			return replybuf;
 		}
 
 		*(colon++) = '\0';
 		if (!*colon) {
-			sprintf(replybuf, "missing freq in chip:freq");
+			snprintf(replybuf, siz, "missing freq in chip:freq");
 			return replybuf;
 		}
 
 		chip = atoi(setting);
 		if (chip < 0 || chip >= minioninfo->chips) {
-			sprintf(replybuf, "invalid freq: chip '%s' valid range 0-%d",
+			snprintf(replybuf, siz, "invalid freq: chip '%s' valid range 0-%d",
 					  setting,
 					  minioninfo->chips);
 			return replybuf;
 		}
 
 		if (!minioninfo->has_chip[chip]) {
-			sprintf(replybuf, "unable to modify chip %d - chip not enabled",
+			snprintf(replybuf, siz, "unable to modify chip %d - chip not enabled",
 					  chip);
 			return replybuf;
 		}
 
 		val = atoi(colon);
 		if (val < MINION_FREQ_MIN || val > MINION_FREQ_MAX) {
-			sprintf(replybuf, "invalid freq: '%s' valid range %d-%d",
+			snprintf(replybuf, siz, "invalid freq: '%s' valid range %d-%d",
 					  setting,
 					  MINION_FREQ_MIN, MINION_FREQ_MAX);
 			return replybuf;
@@ -2800,13 +2800,13 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 
 	if (strcasecmp(option, "ledcount") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing ledcount value");
+			snprintf(replybuf, siz, "missing ledcount value");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 100) {
-			sprintf(replybuf, "invalid ledcount: '%s' valid range 0-100",
+			snprintf(replybuf, siz, "invalid ledcount: '%s' valid range 0-100",
 					  setting);
 			return replybuf;
 		}
@@ -2817,13 +2817,13 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 
 	if (strcasecmp(option, "ledlimit") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing ledlimit value");
+			snprintf(replybuf, siz, "missing ledlimit value");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 200) {
-			sprintf(replybuf, "invalid ledlimit: GHs '%s' valid range 0-200",
+			snprintf(replybuf, siz, "invalid ledlimit: GHs '%s' valid range 0-200",
 					  setting);
 			return replybuf;
 		}
@@ -2834,13 +2834,13 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 
 	if (strcasecmp(option, "spidelay") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing spidelay value");
+			snprintf(replybuf, siz, "missing spidelay value");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 9999) {
-			sprintf(replybuf, "invalid spidelay: ms '%s' valid range 0-9999",
+			snprintf(replybuf, siz, "invalid spidelay: ms '%s' valid range 0-9999",
 					  setting);
 			return replybuf;
 		}
@@ -2853,7 +2853,7 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 		bool is_io = true;
 
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing spireset value");
+			snprintf(replybuf, siz, "missing spireset value");
 			return replybuf;
 		}
 
@@ -2865,13 +2865,13 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 				is_io = false;
 				break;
 			default:
-				sprintf(replybuf, "invalid spireset: '%s' must start with i or s",
+				snprintf(replybuf, siz, "invalid spireset: '%s' must start with i or s",
 						  setting);
 				return replybuf;
 		}
 		val = atoi(setting+1);
 		if (val < 0 || val > 9999) {
-			sprintf(replybuf, "invalid spireset: %c '%s' valid range 0-9999",
+			snprintf(replybuf, siz, "invalid spireset: %c '%s' valid range 0-9999",
 					  *setting, setting+1);
 			return replybuf;
 		}
@@ -2885,13 +2885,13 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 
 	if (strcasecmp(option, "spisleep") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing spisleep value");
+			snprintf(replybuf, siz, "missing spisleep value");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 9999) {
-			sprintf(replybuf, "invalid spisleep: ms '%s' valid range 0-9999",
+			snprintf(replybuf, siz, "invalid spisleep: ms '%s' valid range 0-9999",
 					  setting);
 			return replybuf;
 		}
@@ -2902,13 +2902,13 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 
 	if (strcasecmp(option, "spiusec") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing spiusec value");
+			snprintf(replybuf, siz, "missing spiusec value");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 9999) {
-			sprintf(replybuf, "invalid spiusec: '%s' valid range 0-9999",
+			snprintf(replybuf, siz, "invalid spiusec: '%s' valid range 0-9999",
 					  setting);
 			return replybuf;
 		}
@@ -2917,7 +2917,7 @@ static char *minion_api_set(struct cgpu_info *minioncgpu, char *option, char *se
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

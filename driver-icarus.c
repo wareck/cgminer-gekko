@@ -2401,31 +2401,31 @@ static void icarus_identify(struct cgpu_info *cgpu)
 		info->flash_next_work = true;
 }
 
-static char *icarus_set(struct cgpu_info *cgpu, char *option, char *setting, char *replybuf)
+static char *icarus_set(struct cgpu_info *cgpu, char *option, char *setting, char *replybuf, size_t siz)
 {
 	struct ICARUS_INFO *info = (struct ICARUS_INFO *)(cgpu->device_data);
 	int val;
 
 	if (info->ident != IDENT_CMR2) {
-		strcpy(replybuf, "no set options available");
+		snprintf(replybuf, siz, "no set options available");
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "clock: range %d-%d",
+		snprintf(replybuf, siz, "clock: range %d-%d",
 				  ICARUS_CMR2_SPEED_MIN_INT, ICARUS_CMR2_SPEED_MAX_INT);
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "clock") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing clock setting");
+			snprintf(replybuf, siz, "missing clock setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < ICARUS_CMR2_SPEED_MIN_INT || val > ICARUS_CMR2_SPEED_MAX_INT) {
-			sprintf(replybuf, "invalid clock: '%s' valid range %d-%d",
+			snprintf(replybuf, siz, "invalid clock: '%s' valid range %d-%d",
 					  setting,
 					  ICARUS_CMR2_SPEED_MIN_INT,
 					  ICARUS_CMR2_SPEED_MAX_INT);
@@ -2437,7 +2437,7 @@ static char *icarus_set(struct cgpu_info *cgpu, char *option, char *setting, cha
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

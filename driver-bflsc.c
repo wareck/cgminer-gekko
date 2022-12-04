@@ -2151,30 +2151,30 @@ static bool bflsc_get_stats(struct cgpu_info *bflsc)
 	return allok;
 }
 
-static char *bflsc_set(struct cgpu_info *bflsc, char *option, char *setting, char *replybuf)
+static char *bflsc_set(struct cgpu_info *bflsc, char *option, char *setting, char *replybuf, size_t siz)
 {
 	struct bflsc_info *sc_info = (struct bflsc_info *)(bflsc->device_data);
 	int val;
 
 	if (sc_info->ident != IDENT_BMA) {
-		strcpy(replybuf, "no set options available");
+		snprintf(replybuf, siz, "no set options available");
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "volt: range 0-9 clock: range 0-15");
+		snprintf(replybuf, siz, "volt: range 0-9 clock: range 0-15");
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "volt") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing volt setting");
+			snprintf(replybuf, siz, "missing volt setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 9) {
-			sprintf(replybuf, "invalid volt: '%s' valid range 0-9",
+			snprintf(replybuf, siz, "invalid volt: '%s' valid range 0-9",
 					  setting);
 		}
 
@@ -2186,13 +2186,13 @@ static char *bflsc_set(struct cgpu_info *bflsc, char *option, char *setting, cha
 
 	if (strcasecmp(option, "clock") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing clock setting");
+			snprintf(replybuf, siz, "missing clock setting");
 			return replybuf;
 		}
 
 		val = atoi(setting);
 		if (val < 0 || val > 15) {
-			sprintf(replybuf, "invalid clock: '%s' valid range 0-15",
+			snprintf(replybuf, siz, "invalid clock: '%s' valid range 0-15",
 					  setting);
 		}
 
@@ -2202,7 +2202,7 @@ static char *bflsc_set(struct cgpu_info *bflsc, char *option, char *setting, cha
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

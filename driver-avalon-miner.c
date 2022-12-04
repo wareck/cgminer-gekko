@@ -1079,21 +1079,21 @@ char *set_avalonm_device_voltage(struct cgpu_info *avalonm, char *arg)
 	return NULL;
 }
 
-static char *avalonm_set_device(struct cgpu_info *avalonm, char *option, char *setting, char *replybuf)
+static char *avalonm_set_device(struct cgpu_info *avalonm, char *option, char *setting, char *replybuf, size_t siz)
 {
 	if (strcasecmp(option, "help") == 0) {
-		sprintf(replybuf, "frequency|voltage");
+		snprintf(replybuf, siz, "frequency|voltage");
 		return replybuf;
 	}
 
 	if (strcasecmp(option, "frequency") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing frequency value");
+			snprintf(replybuf, siz, "missing frequency value");
 			return replybuf;
 		}
 
 		if (set_avalonm_device_freq(avalonm, setting)) {
-			sprintf(replybuf, "invalid frequency value, valid range %d-%d",
+			snprintf(replybuf, siz, "invalid frequency value, valid range %d-%d",
 				AVAM_DEFAULT_FREQUENCY_MIN, AVAM_DEFAULT_FREQUENCY_MAX);
 			return replybuf;
 		}
@@ -1103,12 +1103,12 @@ static char *avalonm_set_device(struct cgpu_info *avalonm, char *option, char *s
 
 	if (strcasecmp(option, "voltage") == 0) {
 		if (!setting || !*setting) {
-			sprintf(replybuf, "missing voltage value");
+			snprintf(replybuf, siz, "missing voltage value");
 			return replybuf;
 		}
 
 		if (set_avalonm_device_voltage(avalonm, setting)) {
-			sprintf(replybuf, "invalid voltage value, valid range %d-%d",
+			snprintf(replybuf, siz, "invalid voltage value, valid range %d-%d",
 					AVAM_DEFAULT_VOLTAGE_MIN, AVAM_DEFAULT_VOLTAGE_MAX);
 			return replybuf;
 		}
@@ -1116,7 +1116,7 @@ static char *avalonm_set_device(struct cgpu_info *avalonm, char *option, char *s
 		return NULL;
 	}
 
-	sprintf(replybuf, "Unknown option: %s", option);
+	snprintf(replybuf, siz, "Unknown option: %s", option);
 	return replybuf;
 }
 

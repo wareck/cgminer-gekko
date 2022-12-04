@@ -585,7 +585,7 @@ if test "x$curses" = "xno"; then
 else
 	AC_SEARCH_LIBS(setupterm, pdcurses ncurses pdcurses, [
 		curses=yes
-		cursesmsg="FOUND: ${ac_cv_search_setupterm}"
+		cursesmsg="Enabled: ${ac_cv_search_setupterm}"
 		AC_DEFINE([HAVE_CURSES], [1], [Defined to 1 if curses TUI support is wanted])
 	], [
 		if test "x$curses" = "xyes"; then
@@ -843,13 +843,12 @@ else
 fi
 
 if test "x$dlibusb" != xno; then
-        echo "  libusb_system........: Enabled: $LIBUSB_LIBS"
+        echo "  libusb_system........: $LIBUSB_LIBS"
 else
-	echo "  libusb_system........: Disabled"
+	echo "  libusb_internal......: $LIBUSB_LIBS"
 fi
 
-
-echo "  curses.TUI...........: $cursesmsg"
+	echo "  curses.TUI...........: $cursesmsg"
 
 echo
 
@@ -1035,7 +1034,7 @@ fi
 
 
 #Add any new device to this, along with a no on the end of the test
-if test "x$avalon$avalon2$avalon4$avalon7$avalon8$avalon_miner$bab$bflsc$bitforce$bitfury$bitfury16$bitmain_soc$blockerupter$gekko$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$dragonmint_t1" = xnonononononononononononononononononononononononononononono; then
+if test "x$avalon$avalon2$avalon4$avalon7$avalon8$avalon_miner$bab$bflsc$bitforce$bitfury$bitfury16$bitmain_soc$blockerupter$gekko$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$ants3$sp10$sp30$dragonmint_t1" = xnononononononononononononononononononononononononononononono; then
 	echo
 	AC_MSG_ERROR([No mining devices configured in])
 	echo
