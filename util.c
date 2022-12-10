@@ -1413,7 +1413,7 @@ void cgcond_time(struct timespec *abstime)
 	clock_gettime(CLOCK_REALTIME, abstime);
 }
 
-#ifdef USE_GEKKO
+//#ifdef USE_GEKKO
 /* Get CLOCK_REALTIME for display purposes */
 void cgtime_real(struct timeval *tv)
 {
@@ -1422,7 +1422,7 @@ void cgtime_real(struct timeval *tv)
 	tv->tv_sec = tp.tv_sec;
 	tv->tv_usec = tp.tv_nsec / 1000;
 }
-#endif
+//#endif
 #ifdef WIN32
 /* Mingw32 has no strsep so create our own custom one  */
 
@@ -1784,7 +1784,11 @@ bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port)
 		char *slash;
 
 		snprintf(port, 6, "%.*s", port_len, port_start);
+#ifdef USE_XTRANONCE
 		slash = strpbrk(port, "/#");
+#else
+		slash = strchr(port, '/');
+#endif
 		if (slash)
 			*slash = '\0';
 	} else
@@ -2506,6 +2510,7 @@ static bool parse_diff(struct pool *pool, json_t *val)
 	return true;
 }
 
+#ifdef USE_XTRANONCE
 static bool parse_extranonce(struct pool *pool, json_t *val)
 {
 	char s[RBUFSIZE], *nonce1;
@@ -2539,6 +2544,7 @@ static bool parse_extranonce(struct pool *pool, json_t *val)
 
 	return true;
 }
+#endif
 
 static void __suspend_stratum(struct pool *pool)
 {
@@ -2733,12 +2739,12 @@ bool parse_method(struct pool *pool, char *s)
 		ret = parse_diff(pool, params);
 		goto out_decref;
 	}
-
+#ifdef USE_XTRANONCE
 	if (!strncasecmp(buf, "mining.set_extranonce", 21)) {
 		ret = parse_extranonce(pool, params);
 		goto out_decref;
 	}
-
+#endif
 	if (!strncasecmp(buf, "client.reconnect", 16)) {
 		ret = parse_reconnect(pool, params);
 		goto out_decref;
@@ -2770,7 +2776,7 @@ out_decref:
 out:
 	return ret;
 }
-
+#ifdef USE_XTRANONCE
 bool subscribe_extranonce(struct pool *pool)
 {
 	json_t *val = NULL, *res_val, *err_val;
@@ -2841,6 +2847,7 @@ out:
 	json_decref(val);
 	return ret;
 }
+#endif
 
 bool auth_stratum(struct pool *pool)
 {
@@ -3502,8 +3509,10 @@ bool restart_stratum(struct pool *pool)
 	if (pool->stratum_active)
 		suspend_stratum(pool);
 	if (!initiate_stratum(pool))
+#ifdef USE_XTRANONCE
 		goto out;
 	if (pool->extranonce_subscribe && !subscribe_extranonce(pool))
+#endif
 		goto out;
 	if (!auth_stratum(pool))
 		goto out;

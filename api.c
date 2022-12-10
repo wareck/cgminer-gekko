@@ -1438,10 +1438,6 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 #ifdef HAVE_AN_FPGA
 	int pga;
 #endif
-#if !defined(HAVE_AN_ASIC) || !defined(HAVE_AN_FPGA)
-	int test;
-	test=0;
-#endif
 	int i;
 
 	if (isjson)
@@ -1510,7 +1506,7 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 						, pga
 #endif
 #if !defined(HAVE_AN_ASIC) || !defined(HAVE_AN_FPGA)
-						, test
+						, NULL
 #endif
 					);
 					break;

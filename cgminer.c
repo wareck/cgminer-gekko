@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Andrew Smith
+ * Copyright 2011-2022 Andrew Smith
  * Copyright 2011-2018 Con Kolivas
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
@@ -499,7 +499,11 @@ static struct pool *currentpool = NULL;
 int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
+#ifdef USE_XTRANONCE
 static int total_urls, total_users, total_passes, total_userpasses, total_extranonce;
+#else
+static int total_urls, total_users, total_passes, total_userpasses;
+#endif
 
 static
 #ifndef HAVE_CURSES
@@ -847,8 +851,9 @@ struct pool *add_pool(void)
 	pool->rpc_proxy = NULL;
 	pool->quota = 1;
 	adjust_quota_gcd();
+#ifdef USE_XTRANONCE
 	pool->extranonce_subscribe = false;
-
+#endif
 	return pool;
 }
 
@@ -1118,10 +1123,12 @@ static char *set_url(char *arg)
 	struct pool *pool = add_url();
 
 	setup_url(pool, arg);
+#ifdef USE_XTRANONCE
 	if (strstr(pool->rpc_url, ".nicehash.com") || strstr(pool->rpc_url, "#xnsub")) {
 		pool->extranonce_subscribe = true;
 		applog(LOG_DEBUG, "Pool %d extranonce subscribing enabled.", pool->pool_no);
 	}
+#endif
 	return NULL;
 }
 
@@ -1209,7 +1216,7 @@ static char *set_userpass(const char *arg)
 
 	return NULL;
 }
-
+#ifdef USE_XTRANONCE
 static char *set_extranonce_subscribe(char *arg)
 {
 	struct pool *pool;
@@ -1224,7 +1231,7 @@ static char *set_extranonce_subscribe(char *arg)
 
 	return NULL;
 }
-
+#endif
 static char *enable_debug(bool *flag)
 {
 	*flag = true;
@@ -1993,7 +2000,7 @@ static struct opt_table opt_config_table[] = {
 		     "Set GekkoScience miner ramping hash threshold, rante 0-99"),
 	OPT_WITH_ARG("--gekko-wait-factor",
 		     set_float_0_to_500, opt_show_floatval, &opt_gekko_wait_factor,
-		     "Set GekkoScience miner task send wait factor, range 0.01-1.00"),
+		     "Set GekkoScience miner task send wait factor, range 0.01-2.00"),
 	OPT_WITH_ARG("--gekko-bauddiv",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_bauddiv,
 		     "Set GekkoScience BM1387 baud divider {0: auto, 1: 1.5M, 7: 375K, 13: 214K, 25: 115K}"),
@@ -2156,9 +2163,11 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--expiry|-E",
 		     set_null, NULL, &opt_set_null,
 		     opt_hidden),
+#ifdef USE_XTRANONCE
 	OPT_WITHOUT_ARG("--extranonce-subscribe",
 			set_extranonce_subscribe, NULL,
 			"Enable 'extranonce' stratum subscribe"),
+#endif
 	OPT_WITHOUT_ARG("--failover-only",
 			set_null, &opt_set_null,
 			opt_hidden),
@@ -2693,7 +2702,9 @@ static char *opt_verusage_and_exit(const char *extra)
 #ifdef USE_SP30
         	"sp30 "
 #endif
-
+#ifdef USE_XTRANONCE
+		"xnsub "
+#endif
 		"mining support.\n"
 		, packagename);
 	printf("%s", opt_usage(opt_argv0, extra));
@@ -5584,11 +5595,11 @@ static void set_curblock(const char *hexstr, const unsigned char *bedata)
 	int ofs;
 
 	cg_wlock(&ch_lock);
-#ifdef USE_GEKKO
+//#ifdef USE_GEKKO
 	cgtime_real(&block_timeval);
-#else
-	cgtime(&block_timeval);
-#endif
+//#else
+//	cgtime(&block_timeval);
+//#endif
 	strcpy(current_hash, hexstr);
 	cg_memcpy(current_block, bedata, 32);
 	get_timestamp(blocktime, sizeof(blocktime), &block_timeval);
@@ -5952,8 +5963,10 @@ void write_config(FILE *fcfg)
 				pool->rpc_proxy ? "|" : "",
 				json_escape(pool->rpc_url));
 		}
+#ifdef USE_XTRANONCE
 		if (pool->extranonce_subscribe)
-			fputs("\n\t\t\"extranonce-subscribe\" : true,", fcfg);
+		fputs("\n\t\t\"extranonce-subscribe\" : true,", fcfg);
+#endif
 		fprintf(fcfg, "\n\t\t\"user\" : \"%s\",", json_escape(pool->rpc_user));
 		fprintf(fcfg, "\n\t\t\"pass\" : \"%s\"\n\t}", json_escape(pool->rpc_pass));
 		}
@@ -7527,7 +7540,11 @@ retry_stratum:
 		bool init = pool_tset(pool, &pool->stratum_init);
 
 		if (!init) {
+#ifdef USE_XTRANONCE
 			bool ret = initiate_stratum(pool) && (!pool->extranonce_subscribe || subscribe_extranonce(pool)) && auth_stratum(pool);
+#else
+			bool ret = initiate_stratum(pool) && auth_stratum(pool);
+#endif
 			if (ret)
 				init_stratum_threads(pool);
 			else
@@ -11000,11 +11017,11 @@ begin_bench:
 
 		cgpu->rolling = cgpu->total_mhashes = 0;
 	}
-#ifdef USE_GEKKO
+//#ifdef USE_GEKKO
         cgtime_real(&total_tv_start);
-#else
-        cgtime(&total_tv_start);
-#endif
+//#else
+//      cgtime(&total_tv_start);
+//#endif
 	get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
 
 #ifdef USE_BITMAIN_SOC

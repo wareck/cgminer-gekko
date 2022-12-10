@@ -2,16 +2,16 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
 m4_define([v_min], [12])
-m4_define([v_mic], [0-wrk])
+m4_define([v_mic], [1])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
-m4_define([v_ver], [v_maj.v_min.v_mic])
+m4_define([v_ver], [v_maj.v_min.v_mic-wrk])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
 m4_define([lt_cur], v_mic)
 m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([cgminer], [v_ver], [kernel@kolivas.org])
+AC_INIT([cgminer], [v_ver], [kano])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
@@ -752,6 +752,24 @@ else
 	LIBSYSTEMD_LIBS=""
 fi
 
+extranonce="yes"
+
+AC_ARG_ENABLE([extranonce],
+        [AC_HELP_STRING([--disable-extranonce],[Disable building with extranonce.subscribe support])],
+        [extranonce=$enableval]
+)
+AC_ARG_ENABLE([extranonce],
+        [AC_HELP_STRING([--enable-extranonce],[Enable building extranonce.subscribe support (NiceHash)])],
+        [extranonce=$enableval]
+)
+
+
+if test "x$extranonce" != xyes; then
+        AC_DEFINE([USE_XTRANONCE], [1], [Defined to 1 if libsystemd support is wanted])
+fi
+
+
+
 #check execv signature
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 		   #include <process.h>
@@ -847,10 +865,16 @@ if test "x$dlibusb" != xno; then
 else
 	echo "  libusb_internal......: $LIBUSB_LIBS"
 fi
-
 	echo "  curses.TUI...........: $cursesmsg"
 
-echo
+if test "x$extranonce" != xno; then
+	echo "  extranonce.subscribe.: Enabled"
+else
+        echo "  extranonce.subscribe.: Disabled"
+fi
+
+	echo ""
+
 
 if test "x$ants1" = xyes; then
 	echo "  Antminer.S1.Bitmain..: Enabled"

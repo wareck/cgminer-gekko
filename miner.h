@@ -1389,7 +1389,9 @@ struct pool {
 
 	/* Stratum variables */
 	char *stratum_url;
+#ifdef USE_XTRANONCE
 	bool extranonce_subscribe;
+#endif
 	char *stratum_port;
 	SOCKETTYPE sock;
 	char *sockbuf;
