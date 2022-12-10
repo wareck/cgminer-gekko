@@ -755,17 +755,17 @@ fi
 extranonce="yes"
 
 AC_ARG_ENABLE([extranonce],
-        [AC_HELP_STRING([--disable-extranonce],[Disable building with extranonce.subscribe support])],
+        [AC_HELP_STRING([--disable-extranonce],[Disable extranonce.subscribe support ])],
         [extranonce=$enableval]
 )
 AC_ARG_ENABLE([extranonce],
-        [AC_HELP_STRING([--enable-extranonce],[Enable building extranonce.subscribe support (NiceHash)])],
+        [AC_HELP_STRING([--enable-extranonce],[Enable extranonce.subscribe support (NiceHash)])],
         [extranonce=$enableval]
 )
 
 
-if test "x$extranonce" != xyes; then
-        AC_DEFINE([USE_XTRANONCE], [1], [Defined to 1 if libsystemd support is wanted])
+if test "x$extranonce" != xno; then
+        AC_DEFINE([USE_XTRANONCE], [1], [Defined to 1 if extranonce.subscribe support is wanted])
 fi
 
 
