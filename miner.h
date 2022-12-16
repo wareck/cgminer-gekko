@@ -1014,6 +1014,7 @@ struct pool;
 #define API_MCAST_CODE "FTW"
 #define API_MCAST_ADDR "224.0.0.75"
 
+extern bool opt_mac_yield;
 extern bool opt_widescreen;
 extern bool opt_work_update;
 extern bool opt_protocol;
@@ -1064,6 +1065,7 @@ extern bool opt_gekko_gse_detect;
 extern bool opt_gekko_gsh_detect;
 extern bool opt_gekko_gsi_detect;
 extern bool opt_gekko_gsf_detect;
+extern bool opt_gekko_r909_detect;
 extern float opt_gekko_gsc_freq;
 extern float opt_gekko_gsd_freq;
 extern float opt_gekko_gse_freq;
@@ -1075,6 +1077,7 @@ extern int opt_gekko_bauddiv;
 extern int opt_gekko_gsh_freq;
 extern int opt_gekko_gsi_freq;
 extern int opt_gekko_gsf_freq;
+extern int opt_gekko_r909_freq;
 extern int opt_gekko_gsh_vcore;
 extern int opt_gekko_start_freq;
 extern int opt_gekko_step_delay;

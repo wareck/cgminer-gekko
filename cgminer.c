@@ -231,6 +231,7 @@ bool use_curses = true;
 #else
 bool use_curses;
 #endif
+bool opt_mac_yield;
 bool opt_widescreen;
 static bool alt_status;
 static bool switch_status;
@@ -312,6 +313,7 @@ bool opt_gekko_gse_detect = 0;
 bool opt_gekko_gsh_detect = 0;
 bool opt_gekko_gsi_detect = 0;
 bool opt_gekko_gsf_detect = 0;
+bool opt_gekko_r909_detect = 0;
 float opt_gekko_gsc_freq = 150;
 float opt_gekko_gsd_freq = 100;
 float opt_gekko_gse_freq = 150;
@@ -322,6 +324,7 @@ float opt_gekko_step_freq = 6.25;
 int opt_gekko_gsh_freq = 100;
 int opt_gekko_gsi_freq = 550;
 int opt_gekko_gsf_freq = 200;
+int opt_gekko_r909_freq = 450;
 int opt_gekko_bauddiv = 0;
 int opt_gekko_gsh_vcore = 400;
 int opt_gekko_start_freq = 100;
@@ -1921,7 +1924,7 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--version-file",
 	set_version_path, NULL, opt_hidden,
 	"Set miner version file"),
-	
+
 	OPT_WITHOUT_ARG("--bitmain-fan-ctrl",
 	opt_set_bool, &opt_bitmain_fan_ctrl,
 	"Enable bitmain miner fan controlling"),
@@ -1977,6 +1980,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--gekko-compacf-detect",
 			 opt_set_bool, &opt_gekko_gsf_detect,
 			 "Detect GekkoScience CompacF BM1397"),
+	OPT_WITHOUT_ARG("--gekko-r909-detect",
+			 opt_set_bool, &opt_gekko_r909_detect,
+			 "Detect GekkoScience Terminus R909 BM1397"),
 	OPT_WITHOUT_ARG("--gekko-noboost",
 			 opt_set_bool, &opt_gekko_noboost,
 			 "Disable GekkoScience NewPac/R606/CompacF AsicBoost"),
@@ -2013,6 +2019,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--gekko-compacf-freq",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsf_freq,
 		     "Set GekkoScience CompacF BM1397 frequency in MHz, range 100-800"),
+	OPT_WITH_ARG("--gekko-r909-freq",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_r909_freq,
+		     "Set GekkoScience Terminus R909 BM1397 frequency in MHz, range 100-800"),
 	OPT_WITH_ARG("--gekko-start-freq",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_start_freq,
                      "Ramp start frequency MHz 25-500"),
@@ -2252,6 +2261,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--lowmem",
 			opt_set_bool, &opt_lowmem,
 			"Minimise caching of shares for low memory applications"),
+	OPT_WITHOUT_ARG("--mac-yield",
+			opt_set_bool, &opt_mac_yield,
+			"Allow yield on old macs (default dont)"),
 #ifdef USE_MINION
 	OPT_WITH_ARG("--minion-chipreport",
 		     set_int_0_to_100, opt_show_intval, &opt_minion_chipreport,
@@ -5595,11 +5607,7 @@ static void set_curblock(const char *hexstr, const unsigned char *bedata)
 	int ofs;
 
 	cg_wlock(&ch_lock);
-//#ifdef USE_GEKKO
 	cgtime_real(&block_timeval);
-//#else
-//	cgtime(&block_timeval);
-//#endif
 	strcpy(current_hash, hexstr);
 	cg_memcpy(current_block, bedata, 32);
 	get_timestamp(blocktime, sizeof(blocktime), &block_timeval);
@@ -11017,11 +11025,8 @@ begin_bench:
 
 		cgpu->rolling = cgpu->total_mhashes = 0;
 	}
-//#ifdef USE_GEKKO
-        cgtime_real(&total_tv_start);
-//#else
-//      cgtime(&total_tv_start);
-//#endif
+
+	cgtime_real(&total_tv_start);
 	get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
 
 #ifdef USE_BITMAIN_SOC

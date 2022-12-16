@@ -1,6 +1,6 @@
 /*
  * Copyright 2017-2021 vh
- * Copyright 2021 kano
+ * Copyright 2021-2022 kano
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -34,16 +34,16 @@
 
 enum miner_state {
 	MINER_INIT = 1,
-	MINER_CHIP_COUNT,
-	MINER_CHIP_COUNT_XX,
-	MINER_CHIP_COUNT_OK,
-	MINER_OPEN_CORE,
-	MINER_OPEN_CORE_OK,
-	MINER_MINING,
-	MINER_MINING_DUPS,
-	MINER_SHUTDOWN,
-	MINER_SHUTDOWN_OK,
-	MINER_RESET
+	MINER_CHIP_COUNT,	// 2
+	MINER_CHIP_COUNT_XX,	// 3
+	MINER_CHIP_COUNT_OK,	// 4
+	MINER_OPEN_CORE,	// 5
+	MINER_OPEN_CORE_OK,	// 6
+	MINER_MINING,		// 7
+	MINER_MINING_DUPS,	// 8
+	MINER_SHUTDOWN,	// 9
+	MINER_SHUTDOWN_OK,	// 10
+	MINER_RESET		// 11
 };
 
 enum miner_asic {
@@ -85,6 +85,35 @@ enum asic_state {
 	ASIC_DEAD
 };
 
+// N.B. at 2TH/s R909 ticket 64 = ~1.2 nonces per chip per second
+//  thus 20mins is only ~1000 nonces - so variance isn't very low
+// time range of each value = 10 minutes
+#define CHTIME 600
+// number of ranges thus total 1hr
+#define CHNUM 6
+
+#define CHOFF(n) (((n) + CHNUM) % CHNUM)
+
+// N.B. uses CLOCK_MONOTONIC
+#define CHBASE(_t1) ((int)((_t1) / CHTIME))
+
+#define CHCMP(_t1, _t2) (CHBASE(_t1) == CHBASE(_t2))
+
+struct GEKKOCHIP
+{
+	// seconds time of [offset]
+	time_t zerosec;
+	// the position of [0]
+	int offset;
+	// number of nonces in each range
+	int noncenum[CHNUM];
+	// number of nonces in 0..last-1
+	int noncesum;
+	// last used offset 0 based
+	int last;
+};
+
+
 struct ASIC_INFO {
 	struct timeval last_nonce;              // Last time nonce was found
 	float frequency;                        // Current frequency
@@ -92,6 +121,7 @@ struct ASIC_INFO {
 	bool frequency_updated;                 // Initiate check for new frequency
 	uint32_t frequency_attempt;             // attempts of set_frequency
 	uint32_t dups;                          // Duplicate nonce counter
+	uint32_t dupsall;			// Total duplicate nonce counter
 	enum asic_state state;
 	enum asic_state last_state;
 	struct timeval state_change_time;       // Device startup time
@@ -102,6 +132,10 @@ struct ASIC_INFO {
 	float fullscan_ms;           // Estimated time(ms) for full nonce range
 	uint32_t fullscan_us;        // Estimated time(us) for full nonce range
 	uint64_t hashrate;           // Estimated hashrate = cores x chips x frequency
+	float frequency_reply;
+	
+	int nonces;
+	struct GEKKOCHIP gc;	// running nonce buffer
 };
 
 struct COMPAC_NONCE
@@ -128,6 +162,20 @@ static int cur_attempt[] = { 0, -4, -8, -12 };
 #define JOB_ID_ROLL(_jid, _add, _info) \
 	((_info)->min_job_id + (((_jid) + (_add) - (_info)->min_job_id) % \
 		((_info)->max_job_id + 1 - (_info)->min_job_id)))
+
+// convert chip to address for the 1397
+#define CHIPPY1397(_inf, _chi) (((double)(_inf->chips) == 0) ? \
+	(unsigned char)0 : \
+	((unsigned char)(floor((double)0x100 / (double)(_inf->chips))) * (unsigned char)(_chi)))
+
+// convert address to chip for the 1397
+#define TOCHIPPY1397(_inf, _adr) (((double)(_inf->chips) == 0) ? \
+	0 : (int)floor((double)(_adr) \
+		/ floor((double)0x100 / (double)(_inf->chips))) )
+
+// BM1397 registers
+#define BM1397FREQ 0x08
+#define BM1397TICKET 0x14
 
 #define GHNUM (60*5)
 #define GHOFF(n) (((n) + GHNUM) % GHNUM)
@@ -181,6 +229,43 @@ struct GEKKOHASH
 	int last;
 };
 
+#define JOBMIN 5
+#define JOBOFF(n) (((n) + JOBMIN) % JOBMIN)
+// a time jump without any work will reset the GEKKOJOB data
+//  this would normally be all pool failure or power down due to heat
+//  3 = 3 minutes so should never happen
+#define JOBLIMn 3
+
+// the arrays are minutes of data
+// N.B. uses CLOCK_MONOTONIC
+#define JOBTIME(_sec) ((int)((int)(_sec)/(int)60))
+
+struct GEKKOJOB
+{
+	// JOBTIME of [offset]
+	time_t zeromin;
+	// time of last job added
+	struct timeval lastjob;
+	// the position of [0]
+	int offset;
+	// time of the first job in each
+	struct timeval firstj[JOBMIN];
+	// time of the last job in each
+	struct timeval lastj[JOBMIN];
+	// number of job items in each
+	int jobnum[JOBMIN];
+	// average ms between jobs
+	double avgms[JOBMIN];
+	// min ms
+	double minms[JOBMIN];
+	// max ms
+	double maxms[JOBMIN];
+	// number of jobs in 0..last-1
+	int jobsnum;
+	// last used offset 0 based
+	int last;
+};
+
 struct COMPAC_INFO {
 
 	enum sub_ident ident;		// Miner identity
@@ -229,10 +314,12 @@ struct COMPAC_INFO {
 	float hr_scale;		     // scale adjustment for hashrate
 
 	float micro_temp;            // Micro Reported Temp
+	float wait_factor0;          // Base setting from opt value
 	float wait_factor;           // Used to compute max_task_wait
+	bool lock_freq;		     // When true disable all but safety,reset,shutdown and API freq changes
+	int usb_prop;		     // Number of usec to wait after certain usb commands
 
 	float fullscan_ms;           // Estimated time(ms) for full nonce range
-	float scanhash_ms;           // Sleep time inside scanhash loop
 	float task_ms;               // Avg time(ms) between task sent to device
 	uint32_t fullscan_us;        // Estimated time(us) for full nonce range
 	uint64_t hashrate;           // Estimated hashrate = cores x chips x frequency x hr_scale
@@ -246,7 +333,9 @@ struct COMPAC_INFO {
 	int frequency_fo;            // Frequency check token
 	int frequency_of;            // Frequency check token
 	int accepted;                // Nonces accepted
-	int dups;                    // Duplicates found
+	int dups;                    // Duplicates found (for plateau code)
+	int dupsall;                 // Duplicate nonce counter (total)
+	int dupsreset;		     // Duplicates since reset
 	int tracker;                 // Track code execution path
 	int interface;               // USB interface
 	int init_count;              // USB interface initialization counter
@@ -309,6 +398,7 @@ struct COMPAC_INFO {
 	struct timeval last_write_error;        // Last usb write error message
 	struct timeval last_wu_increase;        // Last wu_max change
 	struct timeval last_pool_lost;          // Last time we lost pool
+	struct timeval last_update_rates;       // Last time we called compac_update_rates()
 
 	struct timeval first_task;
 	uint64_t tasks;
@@ -324,11 +414,17 @@ struct COMPAC_INFO {
 	bool ticket_got_low;			// nonce found close to but >= diff
 	int ticket_failures;			// Must not exceed MAX_TICKET_CHECK
 	struct ASIC_INFO asics[255];
+	int64_t noncebyte[256];			// Count of nonces with the given byte[3] value
+	bool nb2c_setup;			// BM1397 true = nb2chip is setup (false = all 0)
+	uint16_t nb2chip[256];			// BM1397 map nonce byte to: chip that produced it
 	bool active_work[JOB_MAX+1];            // Tag good and stale work
 	struct work *work[JOB_MAX+1];           // Work ring buffer
 
 	pthread_mutex_t ghlock;			// Mutex for all access to gh
 	struct GEKKOHASH gh;			// running hash rate buffer
+	pthread_mutex_t joblock;		// Mutex for all access to jb
+	struct GEKKOJOB job;			// running job rate buffer
+
 	struct timeval tune_limit;		// time between tune checks
 	struct timeval last_tune_up;		// time of last tune up attempt
 

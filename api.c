@@ -1506,7 +1506,7 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 						, pga
 #endif
 #if !defined(HAVE_AN_ASIC) || !defined(HAVE_AN_FPGA)
-						, NULL
+						, NULL //remove error if compile without driver (needed for openwrt tests)
 #endif
 					);
 					break;

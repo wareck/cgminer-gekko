@@ -1413,7 +1413,6 @@ void cgcond_time(struct timespec *abstime)
 	clock_gettime(CLOCK_REALTIME, abstime);
 }
 
-//#ifdef USE_GEKKO
 /* Get CLOCK_REALTIME for display purposes */
 void cgtime_real(struct timeval *tv)
 {
@@ -1422,7 +1421,7 @@ void cgtime_real(struct timeval *tv)
 	tv->tv_sec = tp.tv_sec;
 	tv->tv_usec = tp.tv_nsec / 1000;
 }
-//#endif
+
 #ifdef WIN32
 /* Mingw32 has no strsep so create our own custom one  */
 
