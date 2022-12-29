@@ -191,7 +191,7 @@ static int cur_attempt[] = { 0, -4, -8, -12 };
 #define GHNONCES 400
 
 // a loss of this much hash rate will reduce requested freq and reset
-#define GHREQUIRE 0.80
+#define GHREQUIRE 0.65
 
 // number of nonces needed before using as the rolling hash rate
 // N.B. 200Mhz ticket 16 GSF is around 2/sec
@@ -403,6 +403,8 @@ struct COMPAC_INFO {
 	struct timeval first_task;
 	uint64_t tasks;
 	uint64_t cur_off[CUR_ATTEMPT];
+	double work_usec_avg;
+	uint64_t work_usec_num;
 
 	double last_work_diff;			// Diff of last work sent
 	struct timeval last_ticket_attempt;	// List attempt to set ticket
@@ -422,8 +424,28 @@ struct COMPAC_INFO {
 
 	pthread_mutex_t ghlock;			// Mutex for all access to gh
 	struct GEKKOHASH gh;			// running hash rate buffer
+	float ghrequire;			// Ratio of expected HR required (GHREQUIRE) 0.0-0.8
 	pthread_mutex_t joblock;		// Mutex for all access to jb
 	struct GEKKOJOB job;			// running job rate buffer
+
+	pthread_mutex_t slock;			// usleep() stats
+	uint64_t num0;
+	uint64_t num;
+	double req;
+	double fac;
+	uint64_t num1_1;
+	double req1_1;
+	double fac1_1;
+	uint64_t num1_5;
+	double req1_5;
+	double fac1_5;
+	uint64_t inv;
+
+	double workgen;				// work timing overrun stats
+	int64_t over1num;
+	double over1amt;
+	int64_t over2num;
+	double over2amt;
 
 	struct timeval tune_limit;		// time between tune checks
 	struct timeval last_tune_up;		// time of last tune up attempt

@@ -1081,7 +1081,6 @@ extern int opt_gekko_r909_freq;
 extern int opt_gekko_gsh_vcore;
 extern int opt_gekko_start_freq;
 extern int opt_gekko_step_delay;
-extern bool opt_gekko_mine2;
 extern int opt_gekko_tune2;
 #endif
 #ifdef USE_KLONDIKE
@@ -1548,6 +1547,20 @@ struct work {
     int version;
 #endif
 };
+
+// enable grossly global stratum work stats
+#define STRATUM_WORK_TIMING 1
+
+#if STRATUM_WORK_TIMING
+extern cglock_t swt_lock;
+extern uint64_t stratum_work_count;
+extern uint64_t stratum_work_time;
+extern uint64_t stratum_work_min;
+extern uint64_t stratum_work_max;
+extern uint64_t stratum_work_time0;
+extern uint64_t stratum_work_time10;
+extern uint64_t stratum_work_time100;
+#endif
 
 #ifdef USE_MODMINER
 struct modminer_fpga_state {
