@@ -44,6 +44,11 @@
 #include "elist.h"
 #include "compat.h"
 #include "util.h"
+#include "libssplus.h"
+
+#ifdef USE_AVALON7
+#include "driver-avalon7.h"
+#endif
 
 #define DEFAULT_SOCKWAIT 60
 #ifndef STRATUM_USER_AGENT
@@ -1197,8 +1202,11 @@ bool tq_push(struct thread_q *tq, void *data)
 
 	return rc;
 }
-
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+void *tq_pop(struct thread_q *tq, const struct timespec *abstime)
+#else
 void *tq_pop(struct thread_q *tq)
+#endif
 {
 	struct tq_ent *ent;
 	void *rval = NULL;
@@ -1207,7 +1215,11 @@ void *tq_pop(struct thread_q *tq)
 	mutex_lock(&tq->mutex);
 	if (!list_empty(&tq->q))
 		goto pop;
-
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+	if (abstime)
+		rc = pthread_cond_timedwait(&tq->cond, &tq->mutex, abstime);
+	else
+#endif
 	rc = pthread_cond_wait(&tq->cond, &tq->mutex);
 	if (rc)
 		goto out;
@@ -2318,6 +2330,11 @@ static inline bool configure_stratum_mining(struct pool __maybe_unused *pool)
 
 static bool parse_notify(struct pool *pool, json_t *val)
 {
+#ifdef USE_AVALON7
+	static int32_t th_clean_jobs;
+	static struct timeval last_notify;
+	struct timeval current;
+#endif
 	char *job_id, *prev_hash, *coinbase1, *coinbase2, *bbversion, *nbit,
 	     *ntime, header[260];
 	unsigned char *cb1 = NULL, *cb2 = NULL;
@@ -2469,8 +2486,41 @@ out_unlock:
 	/* A notify message is the closest stratum gets to a getwork */
 	pool->getwork_requested++;
 	total_getworks++;
-	if (pool == current_pool())
+	if (pool == current_pool()) {
 		opt_work_update = true;
+#ifdef USE_AVALON7
+		if (opt_avalon7_ssplus_enable & pool->has_stratum) {
+			/* -1:Ignore, 0:Accept, n:Accept after n seconds, n > 0 */
+			if (opt_force_clean_jobs == -1 && clean)
+				opt_clean_jobs = true;
+
+			if (!opt_force_clean_jobs)
+				opt_clean_jobs = true;
+
+			if (opt_force_clean_jobs > 0) {
+				if (clean)
+					opt_clean_jobs = true;
+				else {
+					if (!last_notify.tv_sec && !last_notify.tv_usec)
+						cgtime(&last_notify);
+					else {
+						cgtime(&current);
+						th_clean_jobs += (int32_t)ms_tdiff(&current, &last_notify);
+						cgtime(&last_notify);
+					}
+
+					if (th_clean_jobs >= opt_force_clean_jobs * 1000)
+						opt_clean_jobs = true;
+				}
+			}
+
+			if (opt_clean_jobs) {
+				ssp_hasher_update_stratum(pool, true);
+				th_clean_jobs = 0;
+			}
+		}
+#endif
+	}
 out:
 	return ret;
 }

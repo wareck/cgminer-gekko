@@ -562,11 +562,7 @@ ASSERT1(sizeof(uint32_t) == 4);
 // All command options
 
 extern char *opt_bitmain_options;
-extern char *opt_set_bitmain_fan;
 extern char *opt_bitmain_freq;
-// Ignored
-extern bool opt_bitmain_nobeeper;
-extern bool opt_bitmain_notempoverctrl;
 
 #ifdef USE_ANT_S2
 extern bool opt_bitmain_checkall;
@@ -574,7 +570,6 @@ extern bool opt_bitmain_checkn2diff;
 #ifndef USE_ANT_S3
 extern char *opt_bitmain_dev;
 #endif
-extern char *opt_bitmain_voltage;
 #endif
 
 extern struct bitmain_info **bitmain_info;
@@ -585,7 +580,6 @@ extern bool opt_bitmain_checkn2diff;
 #endif
 extern bool opt_bitmain_beeper;
 extern bool opt_bitmain_tempoverctrl;
-extern bool opt_bitmain_homemode;
 extern int opt_bitmain_temp;
 extern int opt_bitmain_workdelay;
 extern int opt_bitmain_overheat;

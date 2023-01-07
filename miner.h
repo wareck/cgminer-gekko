@@ -265,6 +265,8 @@ static inline int fsync (int fd)
 	DRIVER_ADD_COMMAND(avalon4) \
 	DRIVER_ADD_COMMAND(avalon7) \
 	DRIVER_ADD_COMMAND(avalon8) \
+	DRIVER_ADD_COMMAND(avalon9) \
+	DRIVER_ADD_COMMAND(avalonlc3) \
 	DRIVER_ADD_COMMAND(avalonm) \
 	DRIVER_ADD_COMMAND(bab) \
 	DRIVER_ADD_COMMAND(bflsc) \
@@ -605,6 +607,9 @@ struct thr_info {
 
 	bool	work_restart;
 	bool	work_update;
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+	bool	clean_jobs;
+#endif
 };
 
 struct string_elist {
@@ -1017,6 +1022,10 @@ struct pool;
 extern bool opt_mac_yield;
 extern bool opt_widescreen;
 extern bool opt_work_update;
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+extern bool opt_clean_jobs;
+extern int opt_force_clean_jobs;
+#endif
 extern bool opt_protocol;
 extern bool have_longpoll;
 extern char *opt_kernel_path;
@@ -1199,9 +1208,10 @@ extern pthread_cond_t restart_cond;
 extern void clear_stratum_shares(struct pool *pool);
 extern void clear_pool_work(struct pool *pool);
 extern void set_target(unsigned char *dest_target, double diff);
-#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
 bool submit_nonce2_nonce(struct thr_info *thr, struct pool *pool, struct pool *real_pool,
 			 uint32_t nonce2, uint32_t nonce, uint32_t ntime);
+uint32_t gen_merkle_root(struct pool *pool, uint64_t nonce2);
 #endif
 #ifdef USE_BITMAIN_SOC
 void get_work_by_nonce2(struct thr_info *thr,
@@ -1654,7 +1664,11 @@ extern void pool_died(struct pool *pool);
 extern struct thread_q *tq_new(void);
 extern void tq_free(struct thread_q *tq);
 extern bool tq_push(struct thread_q *tq, void *data);
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+extern void *tq_pop(struct thread_q *tq, const struct timespec *abstime);
+#else
 extern void *tq_pop(struct thread_q *tq);
+#endif
 extern void tq_freeze(struct thread_q *tq);
 extern void tq_thaw(struct thread_q *tq);
 extern bool successful_connect;
