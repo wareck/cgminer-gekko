@@ -1,6 +1,6 @@
 /*
  * Copyright 2017-2021 vh
- * Copyright 2021-2022 kano
+ * Copyright 2021-2023 kano
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -362,6 +362,8 @@ struct COMPAC_INFO {
 	uint32_t chips;              // Stores number of chips found
 	uint32_t cores;              // Stores number of core per chp
 	uint32_t difficulty;         // For computing hashrate
+	float nonce_expect;	     // For PT_NONONCE
+	float nonce_limit;	     // For PT_NONONCE
 	uint32_t expected_chips;     // Number of chips for device
 	uint64_t hashes;             // Hashes completed
 	uint64_t xhashes;            // Hashes completed / 0xffffffffull

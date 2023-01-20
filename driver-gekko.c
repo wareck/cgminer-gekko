@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2021 vh
  * Copyright 2021-2022 sidehack
- * Copyright 2021-2022 kano
+ * Copyright 2021-2023 kano
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -1337,6 +1337,24 @@ static void compac_update_rates(struct cgpu_info *compac)
 	else
 		info->tune_up = 99;
 
+	// shouldn't happen, but next call should fix it
+	if (info->difficulty == 0)
+		info->nonce_expect = 0;
+	else
+	{
+		// expected seconds per nonce for PT_NONONCE
+		info->nonce_expect = info->fullscan_ms * info->difficulty;
+		// BM1397 check is per miner, not per chip, fullscan_ms is sum of chips
+		if (info->asic_type != BM1397 && info->chips > 1)
+			info->nonce_expect *= (float)info->chips;
+
+		// CDF >2000% is avg once in 485165205.1 nonces
+		info->nonce_limit = info->nonce_expect * 20.0;
+
+		// N.B. this ignores info->ghrequire since
+		//  that should be an independent test
+	}
+
 	applog(LOG_INFO, "%d: %s %d - Rates: ms %.2f tu %.2f td %.2f",
 		compac->cgminer_id, compac->drv->name, compac->device_id,
 		info->fullscan_ms, info->tune_up, info->tune_down);
@@ -2241,28 +2259,26 @@ static void *compac_mine2(void *object)
 					// missing nonces
 					if (info->asic_type == BM1397)
 					{
-						if (has_freq && i == 0
-						&&  ms_tdiff(&now, &info->last_nonce) > info->fullscan_ms * 60 * info->difficulty)
+						if (has_freq && i == 0 && info->nonce_limit > 0.0
+						&&  ms_tdiff(&now, &info->last_nonce) > info->nonce_limit)
 						{
 							plateau_type = PT_NONONCE;
 							applog(LOG_ERR, "%d: %s %d - plateau_type PT_NONONCE [%u] %d > %.2f (lock=%d)",
 								compac->cgminer_id, compac->drv->name, compac->device_id, i,
-								ms_tdiff(&now, &info->last_nonce),
-								info->fullscan_ms * 60 * info->difficulty, info->lock_freq);
+								ms_tdiff(&now, &info->last_nonce), info->nonce_limit, info->lock_freq);
 							if (info->lock_freq)
 								info->lock_freq = false;
 						}
 					}
 					else
 					{
-						if (has_freq
-						&&  ms_tdiff(&now, &asic->last_nonce) > asic->fullscan_ms * 60)
+						if (has_freq && info->nonce_limit > 0.0
+						&&  ms_tdiff(&now, &asic->last_nonce) > info->nonce_limit)
 						{
 							plateau_type = PT_NONONCE;
 							applog(LOG_ERR, "%d: %s %d - plateau_type PT_NONONCE [%u] %d > %.2f (lock=%d)",
 								compac->cgminer_id, compac->drv->name, compac->device_id, i,
-								ms_tdiff(&now, &asic->last_nonce), asic->fullscan_ms * 60,
-								info->lock_freq);
+								ms_tdiff(&now, &asic->last_nonce), info->nonce_limit, info->lock_freq);
 							if (info->lock_freq)
 								info->lock_freq = false;
 						}
@@ -4120,6 +4136,8 @@ static struct api_data *compac_api_stats(struct cgpu_info *compac)
 	root = api_add_int64(root, "TicketNonces", &info->ticket_nonces, false);
 	root = api_add_int64(root, "TicketBelow", &info->below_nonces, false);
 	root = api_add_bool(root, "TicketOK", &info->ticket_ok, false);
+	root = api_add_float(root, "NonceExpect", &info->nonce_expect, false);
+	root = api_add_float(root, "NonceLimit", &info->nonce_limit, false);
 
 	// info->gh access must be under lock
 	mutex_lock(&info->ghlock);
