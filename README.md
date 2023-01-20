@@ -1,14 +1,12 @@
 ### #####################################################################
-##  CGminer 4.12.0 GekkoScience Compac, 2pac & Newpack BM1384 & CompacF #
+##  CGminer 4.12.1 GekkoScience Compac, 2pac & Newpack BM1384 & CompacF #
 ### #####################################################################
 
-This is cgminer 4.12.0 with support for GekkoScience Compac, CompacF, 2pac.
+This is cgminer 4.12.1 with support for GekkoScience Compac, CompacF, 2pac.
 
-This software is forked from cgminer 4.11.1 original from ckolivas.
+This software is forked from cgminer 4.10.0 original from ckolivas.
 
-Then i added v.thoang gekko drivers
-
-I also adapted this code to my own material / miners / computer
+Then i added v.thoang gekko drivers and kanoi upgrade, avalon updates , xtranonce
 
 (you can refer to original documentation to docs/README)
 
