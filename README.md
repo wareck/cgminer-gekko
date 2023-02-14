@@ -52,8 +52,9 @@ to build this specific code on linux:
 	sudo cp 01-cgminer.rules /etc/udev/rules.d/
 	CFLAGS="-O2 -march=native" ./autogen.sh
 	./configure --enable-gekko
-	make
+	sudo make
 	sudo make install
+	sudo reboot
 	
 ### Option Summary ###
 
