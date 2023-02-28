@@ -1342,7 +1342,7 @@ static void compac_update_rates(struct cgpu_info *compac)
 		info->nonce_expect = 0;
 	else
 	{
-		// expected seconds per nonce for PT_NONONCE
+		// expected ms per nonce for PT_NONONCE
 		info->nonce_expect = info->fullscan_ms * info->difficulty;
 		// BM1397 check is per miner, not per chip, fullscan_ms is sum of chips
 		if (info->asic_type != BM1397 && info->chips > 1)
@@ -4396,7 +4396,13 @@ static struct api_data *compac_api_stats(struct cgpu_info *compac)
 	uint64_t swt100 = stratum_work_time100;
 	cg_runlock(&swt_lock);
 
-	double sw_avg = (double)swt / (double)swc;
+	double sw_avg;
+
+	if (swc == 0)
+		sw_avg = 0.0;
+	else
+		sw_avg = (double)swt / (double)swc;
+
 	root = api_add_uint64(root, "SWCount", &swc, true);
 	root = api_add_double(root, "SWAvg", &sw_avg, true);
 	root = api_add_uint64(root, "SWMin", &swmin, true);

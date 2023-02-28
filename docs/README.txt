@@ -1,32 +1,39 @@
 This is a multi-threaded multi-pool FPGA and ASIC miner for bitcoin.
 
-This code is provided entirely free of charge by the programmer in his spare
-time so donations would be greatly appreciated. Please consider donating to the
-address below.
+This code is provided entirely free of charge by it's programmers.
 
-Con Kolivas <kernel@kolivas.org>
-15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
+If you wish to support it, simply mine at https://kano.is/
 
-NOTE: This code is licensed under the GPLv3. This means that the source to any
+This code is licensed under the GPLv3. This means that the source to any
 modifications you make to this code MUST be provided by law if you distribute
 modified binaries. See COPYING for details.
 
 
-DOWNLOADS:
+Search below for the following headings for details about mining
 
-http://ck.kolivas.org/apps/cgminer
+EXECUTIVE SUMMARY ON USAGE
+BUILDING CGMINER FOR YOURSELF
+ If building from git
+ If building on Ubuntu
+ Basic *nix build instructions
+ Building on Windows10
+ Building on MacOS
+Usage instructions
+SETTING UP USB DEVICES on WINDOWS/LINUX/OSX
+ WINDOWS
+ LINUX
+ OSX
+ Advanced USB options
+SCREEN DISPLAY WHILE RUNNING
+MULTIPLE POOL CONNECTIONS
+ QUOTAS
+LOGGING
+FAQ
+
 
 GIT TREE:
 
-https://github.com/ckolivas/cgminer
-
-Support thread:
-
-http://bitcointalk.org/index.php?topic=28402.0
-
-IRC Channel:
-
-irc://irc.freenode.net/cgminer
+https://github.com/kanoi/cgminer
 
 SEE ALSO API-README, ASIC-README and FGPA-README FOR MORE INFORMATION ON EACH.
 
@@ -36,19 +43,19 @@ EXECUTIVE SUMMARY ON USAGE:
 
 Single pool:
 
-cgminer -o http://pool:port -u username -p password
+cgminer -o stratum+tcp://pool:port -u username -p password
 
 Multiple pools:
 
-cgminer -o http://pool1:port -u pool1username -p pool1password -o http://pool2:port -u pool2usernmae -p pool2password
+cgminer -o stratum+tcp://pool1:port -u pool1username -p pool1password -o stratum+tcp://pool2:port -u pool2usernmae -p pool2password
 
 Single pool with a standard http proxy:
 
-cgminer -o "http:proxy:port|http://pool:port" -u username -p password
+cgminer -o "http:proxy:port|stratum+tcp://pool:port" -u username -p password
 
 Single pool with a socks5 proxy:
 
-cgminer -o "socks5:proxy:port|http://pool:port" -u username -p password
+cgminer -o "socks5:proxy:port|stratum+tcp://pool:port" -u username -p password
 
 Single pool with stratum protocol support:
 
@@ -81,36 +88,43 @@ Any configuration file may also contain a single
 to recursively include another configuration file.
 Writing the configuration will save all settings from all files in the output.
 
-
 ---
+
 BUILDING CGMINER FOR YOURSELF
 
 DEPENDENCIES:
 Mandatory:
-	pkg-config		http://www.freedesktop.org/wiki/Software/pkg-config
-	libtool			http://www.gnu.org/software/libtool/
+	pkg-config      http://www.freedesktop.org/wiki/Software/pkg-config
+	libtool         http://www.gnu.org/software/libtool/
 Optional:
-	curl dev library 	http://curl.haxx.se/libcurl/
+	curl dev library        http://curl.haxx.se/libcurl/
 	(libcurl4-openssl-dev - Must tell configure --disable-libcurl otherwise
 	it will attempt to compile it in)
 
 	curses dev library
 	(libncurses5-dev or libpdcurses on WIN32 for text user interface)
 
+	libusb-1 dev library (libusb-1.0-0-dev)
+	(This is only required for USB device support)
+
 	libudev dev library (libudev-dev)
 	(This is only required for USB device support and is linux only)
 
+	uthash dev (uthash-dev)
+	Will use a copy included with the source if unavailable.
+
+	libjansson dev (libjansson-dev)
+	Will use a copy included with the source if unavailable.
+
 If building from git:
+	git           (of course)
 	autoconf
 	automake
 
-If building on Red Hat:
-        sudo yum install autoconf automake autoreconf libtool openssl-compat-bitcoin-devel.x86_64 \
-                         curl libcurl libcurl-devel openssh
-
 If building on Ubuntu:
-	sudo apt-get install build-essential autoconf automake libtool pkg-config \
-                             libcurl3-dev libudev-dev
+	sudo apt-get install build-essential autoconf automake libtool \
+                             pkg-config libcurl4-openssl-dev libudev-dev \
+                             libusb-1.0-0-dev libncurses5-dev zlib1g-dev git
 
 CGMiner specific configuration options:
   --enable-ants1          Compile support for Antminer S1 Bitmain (default
@@ -120,6 +134,8 @@ CGMiner specific configuration options:
   --enable-avalon         Compile support for Avalon (default disabled)
   --enable-avalon2        Compile support for Avalon2/3 (default disabled)
   --enable-avalon4        Compile support for Avalon4/4.1/6 (default disabled)
+  --enable-avalon7        Compile support for Avalon7 (default disabled)
+  --enable-avalon8        Compile support for Avalon8 (default disabled)
   --enable-bab            Compile support for BlackArrow Bitfury (default
                           disabled)
   --enable-bflsc          Compile support for BFL ASICs (default disabled)
@@ -129,10 +145,11 @@ CGMiner specific configuration options:
   --enable-bitmine_A1     Compile support for Bitmine.ch A1 ASICs (default
                           disabled)
   --enable-blockerupter   Compile support for ASICMINER BlockErupter Tube/Prisma
-  			  (default disabled)
+                          (default disabled)
   --enable-cointerra      Compile support for Cointerra ASICs (default disabled)
   --enable-drillbit       Compile support for Drillbit BitFury ASICs (default
                           disabled)
+  --enable-gekko          Compile support for GekkoScience (default disabled)
   --enable-hashfast       Compile support for Hashfast (default disabled)
   --enable-icarus         Compile support for Icarus (default disabled)
   --enable-klondike       Compile support for Klondike (default disabled)
@@ -157,24 +174,22 @@ Basic *nix build instructions:
 	To actually build:
 
 	./autogen.sh	# only needed if building from git repo
-	CFLAGS="-O2 -Wall -march=native" ./configure <options>
+	CFLAGS="-O2 -Wall -march=native -fcommon" ./configure <options>
 	make
 
 	No installation is necessary. You may run cgminer from the build
 	directory directly, but you may do make install if you wish to install
 	cgminer to a system location or location you specified.
 
-Building for windows:
 
-It is actually easiest to build a windows binary using cross compilation tools
-provided by "mxe" available at http://mxe.cc/ (use the 32 bit one!)
-Once you have followed the instructions for building mxe:
-	export PATH=(path/to/mxe)/usr/bin/:$PATH
-	CFLAGS="-O2 -Wall -W -march=i686" ./configure --host=i686-pc-mingw32 <options>
-	make
+Building on Windows10:
 
-Native WIN32 build instructions: see windows-build.txt but these instructions
-are now hopelessly out of date.
+see windows-build.txt
+
+
+Building on MacOS
+
+see mac-build.txt
 
 ---
 
@@ -229,6 +244,58 @@ Options for both config file and command line:
 --avalon4-speed-error <arg> Set A3218 speed error for smart speed mode 1 (default: 3)
 --avalon4-least-pll <arg> Set least pll check threshold for smart speed mode 2 (default: 768)
 --avalon4-most-pll <arg> Set most pll check threshold for smart speed mode 2 (default: 256)
+--avalon7-voltage   Set Avalon7 default core voltage, in millivolts, step: 78
+--avalon7-voltage-level Set Avalon7 default level of core voltage, range:[0, 15], step: 1
+--avalon7-voltage-offset Set Avalon7 default offset of core voltage, range:[-2, 1], step: 1
+--avalon7-freq      Set Avalon7 default frequency, range:[24, 1404], step: 12, example: 500
+--avalon7-freq-sel <arg> Set Avalon7 default frequency select, range:[0, 5], step: 1, example: 3 (default: 0)
+--avalon7-fan       Set Avalon7 target fan speed, range:[0, 100], step: 1, example: 0-100
+--avalon7-temp <arg> Set Avalon7 target temperature, range:[0, 100] (default: 99)
+--avalon7-polling-delay <arg> Set Avalon7 polling delay value (ms) (default: 20)
+--avalon7-aucspeed <arg> Set AUC3 IIC bus speed (default: 400000)
+--avalon7-aucxdelay <arg> Set AUC3 IIC xfer read delay, 4800 ~= 1ms (default: 19200)
+--avalon7-smart-speed <arg> Set Avalon7 smart speed, range 0-1. 0 means Disable (default: 1)
+--avalon7-th-pass <arg> Set A3212 th pass value (default: 162)
+--avalon7-th-fail <arg> Set A3212 th fail value (default: 10921)
+--avalon7-th-init <arg> Set A3212 th init value (default: 32767)
+--avalon7-th-ms <arg> Set A3212 th ms value (default: 1)
+--avalon7-th-timeout <arg> Set A3212 th timeout value (default: 0)
+--avalon7-iic-detect Enable Avalon7 detect through iic controller
+--avalon7-freqadj-time <arg> Set Avalon7 check interval when run in AVA7_FREQ_TEMPADJ_MODE (default: 60)
+--avalon7-delta-temp <arg> Set Avalon7 delta temperature when reset freq in AVA7_FREQ_TEMPADJ_MODE (default: 0)
+--avalon7-delta-freq <arg> Set Avalon7 delta freq when adjust freq in AVA7_FREQ_TEMPADJ_MODE (default: 100)
+--avalon7-freqadj-temp <arg> Set Avalon7 check temperature when run into AVA7_FREQ_TEMPADJ_MODE (default: 104)
+--avalon7-nonce-mask <arg> Set A3212 nonce mask, range 24-32. (default: 31)
+--no-avalon7-asic-debug Disable A3212 debug.
+--avalon8-voltage-level Set Avalon8 default level of core voltage, range:[0, 15], step: 1
+--avalon8-voltage-level-offset Set Avalon8 default offset of core voltage level, range:[-2, 1], step: 1
+--avalon8-freq      Set Avalon8 default frequency, range:[25, 1200], step: 25, example: 800
+--avalon8-freq-sel <arg> Set Avalon8 default frequency select, range:[0, 3], step: 1, example: 3 (default: 3)
+--avalon8-fan       Set Avalon8 target fan speed, range:[0, 100], step: 1, example: 0-100
+--avalon8-temp <arg> Set Avalon8 target temperature, range:[0, 100] (default: 90)
+--avalon8-polling-delay <arg> Set Avalon8 polling delay value (ms) (default: 20)
+--avalon8-aucspeed <arg> Set AUC3 IIC bus speed (default: 400000)
+--avalon8-aucxdelay <arg> Set AUC3 IIC xfer read delay, 4800 ~= 1ms (default: 19200)
+--avalon8-smart-speed <arg> Set Avalon8 smart speed, range 0-1. 0 means Disable (default: 1)
+--avalon8-th-pass <arg> Set A3210 th pass value (default: -1)
+--avalon8-th-fail <arg> Set A3210 th fail value (default: -1)
+--avalon8-th-init <arg> Set A3210 th init value (default: 32767)
+--avalon8-th-ms <arg> Set A3210 th ms value (default: 5)
+--avalon8-th-timeout <arg> Set A3210 th timeout value (default: 4294967295)
+--avalon8-th-add <arg> Set A3210 th add value (default: 1)
+--avalon8-iic-detect Enable Avalon8 detect through iic controller
+--avalon8-nonce-mask <arg> Set A3210 nonce mask, range 24-32. (default: -1)
+--avalon8-nonce-check <arg> Set A3210 nonce check, range 0-1. (default: 1)
+--avalon8-roll-enable <arg> Set A3210 roll enable, range 0-1. (default: 1)
+--avalon8-mux-l2h <arg> Set Avalon8 mux l2h, range 0-2. (default: 0)
+--avalon8-mux-h2l <arg> Set Avalon8 mux h2l, range 0-1. (default: 1)
+--avalon8-h2ltime0-spd <arg> Set Avalon8 h2ltime0 spd, range 0-255. (default: 3)
+--avalon8-spdlow <arg> Set Avalon8 spdlow, range 0-3. (default: -1)
+--avalon8-spdhigh <arg> Set Avalon8 spdhigh, range 0-3. (default: 3)
+--avalon8-cinfo-asic Set Avalon8 cinfo asic index, range:[0, 25], step: 1
+--avalon8-pid-p <arg> Set Avalon8 pid-p, range 0-9999. (default: 2)
+--avalon8-pid-i <arg> Set Avalon8 pid-i, range 0-9999. (default: 5)
+--avalon8-pid-d <arg> Set Avalon8 pid-d, range 0-9999. (default: 0)
 --bab-options <arg> Set BaB options max:def:min:up:down:hz:delay:trf
 --balance           Change multipool strategy from failover to even share balance
 --benchfile <arg>   Run cgminer in benchmark mode using a work file - produces no shares
@@ -252,18 +319,73 @@ Options for both config file and command line:
 --bitmain-dev <arg> Set bitmain device - S2 only
 --bitmainbeeper     Set bitmain beeper ringing
 --bitmaintempoverctrl Set bitmain stop runing when temprerature is over 80 degree Celsius
+--block-check       Run a block difficulty check of the binary then exit
 --bxf-bits <arg>    Set max BXF/HXF bits for overclocking (default: 54)
 --bxf-temp-target <arg> Set target temperature for BXF/HXF devices (default: 82)
 --bxm-bits <arg>    Set BXM bits for overclocking (default: 54)
 --btc-address <arg> Set bitcoin target address when solo mining to bitcoind
 --btc-sig <arg>     Set signature to add to coinbase when solo mining (optional)
+--compac-freq <arg> Set GekkoScience Compac frequency in MHz, range 100-500 (default: 150.0)
 --compact           Use compact display without per device statistics
 --debug|-D          Enable debug output
+--decode            Decode 2nd pool stratum coinbase transactions (1st must be bitcoind) and exit
 --disable-rejecting Automatically disable pools that continually reject shares
+--dragonmint-t1-options <arg> Dragonmint T1 options ref_clk_khz:sys_clk_khz:spi_clk_khz:override_chip_num
+--T1efficient       Tune Dragonmint T1 per chain voltage and frequency for optimal efficiency
+--T1noauto          Disable Dragonmint T1 per chain auto voltage and frequency tuning
+--T1performance     Tune Dragonmint T1 per chain voltage and frequency for maximum performance
+--T1fantarget <arg> Throttle T1 frequency to keep fan less than target fan speed (default: 100)
+--T1Pll1 <arg>      Set PLL Clock 1 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll2 <arg>      Set PLL Clock 2 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll3 <arg>      Set PLL Clock 3 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll4 <arg>      Set PLL Clock 4 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll5 <arg>      Set PLL Clock 5 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll6 <arg>      Set PLL Clock 6 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll7 <arg>      Set PLL Clock 7 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll8 <arg>      Set PLL Clock 8 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Volt1 <arg>     Dragonmint T1 set voltage 1 - VID overrides if set (390-425) (default: 404)
+--T1Volt2 <arg>     Dragonmint T1 set voltage 2 - VID overrides if set (390-425) (default: 404)
+--T1Volt3 <arg>     Dragonmint T1 set voltage 3 - VID overrides if set (390-425) (default: 404)
+--T1Volt4 <arg>     Dragonmint T1 set voltage 4 - VID overrides if set (390-425) (default: 404)
+--T1Volt5 <arg>     Dragonmint T1 set voltage 5 - VID overrides if set (390-425) (default: 404)
+--T1Volt6 <arg>     Dragonmint T1 set voltage 6 - VID overrides if set (390-425) (default: 404)
+--T1Volt7 <arg>     Dragonmint T1 set voltage 7 - VID overrides if set (390-425) (default: 404)
+--T1Volt8 <arg>     Dragonmint T1 set voltage 8 - VID overrides if set (390-425) (default: 404)
+--T1VID1 <arg>      Dragonmint T1 set VID 1 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID2 <arg>      Dragonmint T1 set VID 2 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID3 <arg>      Dragonmint T1 set VID 3 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID4 <arg>      Dragonmint T1 set VID 4 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID5 <arg>      Dragonmint T1 set VID 5 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID6 <arg>      Dragonmint T1 set VID 6 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID7 <arg>      Dragonmint T1 set VID 7 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID8 <arg>      Dragonmint T1 set VID 8 in noauto - Overrides voltage if set (1-31) (default: 0)
 --drillbit-options <arg> Set drillbit options <int|ext>:clock[:clock_divider][:voltage]
 --expiry|-E <arg>   Upper bound on how many seconds after getting work we consider a share from it stale (default: 120)
 --failover-only     Don't leak work to backup pools when primary pool is lagging
 --fix-protocol      Do not redirect to stratum protocol from GBT
+--gekko-2pac-detect Detect GekkoScience 2Pac BM1384
+--gekko-2pac-freq <arg> Set GekkoScience 2Pac BM1384 frequency in MHz, range 6.25-500 (default 100.0)
+--gekko-bauddiv     Set GekkoScience BM1387 baud divider {0: auto, 1: 1.5M, 7: 375K, 13: 214K, 25: 115K}
+--gekko-compac-detect Detect GekkoScience Compac BM1384
+--gekko-compac-freq <arg> Set GekkoScience Compac BM1384 frequency in MHz, range 6.25-500 (default 150.0)
+--gekko-compacf-detect Detect GekkoScience CompacF BM1397
+--gekko-compacf-freq <arg> Set GekkoScience CompacF BM1397 frequency in MHz, range 100-800 (default 200.0)
+--gekko-r909-detect Detect GekkoScience Terminus R909 BM1397
+--gekko-r909-freq <arg> Set GekkoScience Terminus R909 BM1397 frequency in MHz, range 100-800 (default 450.0)
+--gekko-lowboost    GekkoScience NewPac/R606 AsicBoost - 2 midstate
+--gekko-newpac-detect Detect GekkoScience NewPac BM1387
+--gekko-newpac-freq Set GekkoScience NewPac BM1387 frequency in MHz, range 50-900
+--gekko-noboost     Disable GekkoScience NewPac/R606/CompacF/R909 AsicBoost
+--gekko-r606-detect Detect GekkoScience Terminus BM1387
+--gekko-r606-freq   Set GekkoScience Terminus R606 frequency in MHz, range 50-900
+--gekko-serial      Detect GekkoScience Device by Serial Number
+--gekko-start-freq  Ramp start frequency MHz 25-500
+--gekko-step-delay  Ramp step interval range 1-600
+--gekko-terminus-detect Detect GekkoScience Terminus BM1384
+--gekko-terminus-freq <arg> Set GekkoScience Terminus BM1384 frequency in MHz, range 6.25-500 (default 150.0)
+--gekko-tune-down   Set GekkoScience miner minimum hash quality, range 0-100
+--gekko-tune-up     Set GekkoScience miner ramping hash threshold, range 0-99
+--gekko-wait-factor Set GekkoScience miner task send wait factor, range 0.01-2.00
 --hfa-hash-clock <arg> Set hashfast clock speed (default: 550)
 --hfa-fail-drop <arg> Set how many MHz to drop clockspeed each failure on an overlocked hashfast device (default: 10)
 --hfa-fan <arg>     Set fanspeed percentage for hashfast, single value or range (default: 10-85)
@@ -278,6 +400,7 @@ Options for both config file and command line:
 --load-balance      Change multipool strategy from failover to quota based balance
 --log|-l <arg>      Interval in seconds between log output (default: 5)
 --lowmem            Minimise caching of shares for low memory applications
+--mac-yield         Allow yield on old macs (default dont)
 --minion-chipreport <arg> Seconds to report chip 5min hashrate, range 0-100 (default: 0=disabled)
 --minion-freq <arg> Set minion chip frequencies in MHz, single value or comma list, range 100-1400 (default: 1200)
 --minion-freqchange Millisecond total time to do frequency changes (default: 1000)
@@ -368,6 +491,58 @@ ASIC only options:
 --avalon4-ntime-offset <arg> Set Avalon4 MM ntime rolling max offset (default: 4)
 --avalon4-aucspeed <arg> Set Avalon4 AUC IIC bus speed (default: 400000)
 --avalon4-aucxdelay <arg> Set Avalon4 AUC IIC xfer read delay, 4800 ~= 1ms (default: 9600)
+--avalon7-voltage   Set Avalon7 default core voltage, in millivolts, step: 78
+--avalon7-voltage-level Set Avalon7 default level of core voltage, range:[0, 15], step: 1
+--avalon7-voltage-offset Set Avalon7 default offset of core voltage, range:[-2, 1], step: 1
+--avalon7-freq      Set Avalon7 default frequency, range:[24, 1404], step: 12, example: 500
+--avalon7-freq-sel <arg> Set Avalon7 default frequency select, range:[0, 5], step: 1, example: 3 (default: 0)
+--avalon7-fan       Set Avalon7 target fan speed, range:[0, 100], step: 1, example: 0-100
+--avalon7-temp <arg> Set Avalon7 target temperature, range:[0, 100] (default: 99)
+--avalon7-polling-delay <arg> Set Avalon7 polling delay value (ms) (default: 20)
+--avalon7-aucspeed <arg> Set AUC3 IIC bus speed (default: 400000)
+--avalon7-aucxdelay <arg> Set AUC3 IIC xfer read delay, 4800 ~= 1ms (default: 19200)
+--avalon7-smart-speed <arg> Set Avalon7 smart speed, range 0-1. 0 means Disable (default: 1)
+--avalon7-th-pass <arg> Set A3212 th pass value (default: 162)
+--avalon7-th-fail <arg> Set A3212 th fail value (default: 10921)
+--avalon7-th-init <arg> Set A3212 th init value (default: 32767)
+--avalon7-th-ms <arg> Set A3212 th ms value (default: 1)
+--avalon7-th-timeout <arg> Set A3212 th timeout value (default: 0)
+--avalon7-iic-detect Enable Avalon7 detect through iic controller
+--avalon7-freqadj-time <arg> Set Avalon7 check interval when run in AVA7_FREQ_TEMPADJ_MODE (default: 60)
+--avalon7-delta-temp <arg> Set Avalon7 delta temperature when reset freq in AVA7_FREQ_TEMPADJ_MODE (default: 0)
+--avalon7-delta-freq <arg> Set Avalon7 delta freq when adjust freq in AVA7_FREQ_TEMPADJ_MODE (default: 100)
+--avalon7-freqadj-temp <arg> Set Avalon7 check temperature when run into AVA7_FREQ_TEMPADJ_MODE (default: 104)
+--avalon7-nonce-mask <arg> Set A3212 nonce mask, range 24-32. (default: 31)
+--no-avalon7-asic-debug Disable A3212 debug.
+--avalon8-voltage-level Set Avalon8 default level of core voltage, range:[0, 15], step: 1
+--avalon8-voltage-level-offset Set Avalon8 default offset of core voltage level, range:[-2, 1], step: 1
+--avalon8-freq      Set Avalon8 default frequency, range:[25, 1200], step: 25, example: 800
+--avalon8-freq-sel <arg> Set Avalon8 default frequency select, range:[0, 3], step: 1, example: 3 (default: 3)
+--avalon8-fan       Set Avalon8 target fan speed, range:[0, 100], step: 1, example: 0-100
+--avalon8-temp <arg> Set Avalon8 target temperature, range:[0, 100] (default: 90)
+--avalon8-polling-delay <arg> Set Avalon8 polling delay value (ms) (default: 20)
+--avalon8-aucspeed <arg> Set AUC3 IIC bus speed (default: 400000)
+--avalon8-aucxdelay <arg> Set AUC3 IIC xfer read delay, 4800 ~= 1ms (default: 19200)
+--avalon8-smart-speed <arg> Set Avalon8 smart speed, range 0-1. 0 means Disable (default: 1)
+--avalon8-th-pass <arg> Set A3210 th pass value (default: -1)
+--avalon8-th-fail <arg> Set A3210 th fail value (default: -1)
+--avalon8-th-init <arg> Set A3210 th init value (default: 32767)
+--avalon8-th-ms <arg> Set A3210 th ms value (default: 5)
+--avalon8-th-timeout <arg> Set A3210 th timeout value (default: 4294967295)
+--avalon8-th-add <arg> Set A3210 th add value (default: 1)
+--avalon8-iic-detect Enable Avalon8 detect through iic controller
+--avalon8-nonce-mask <arg> Set A3210 nonce mask, range 24-32. (default: -1)
+--avalon8-nonce-check <arg> Set A3210 nonce check, range 0-1. (default: 1)
+--avalon8-roll-enable <arg> Set A3210 roll enable, range 0-1. (default: 1)
+--avalon8-mux-l2h <arg> Set Avalon8 mux l2h, range 0-2. (default: 0)
+--avalon8-mux-h2l <arg> Set Avalon8 mux h2l, range 0-1. (default: 1)
+--avalon8-h2ltime0-spd <arg> Set Avalon8 h2ltime0 spd, range 0-255. (default: 3)
+--avalon8-spdlow <arg> Set Avalon8 spdlow, range 0-3. (default: -1)
+--avalon8-spdhigh <arg> Set Avalon8 spdhigh, range 0-3. (default: 3)
+--avalon8-cinfo-asic Set Avalon8 cinfo asic index, range:[0, 25], step: 1
+--avalon8-pid-p <arg> Set Avalon8 pid-p, range 0-9999. (default: 2)
+--avalon8-pid-i <arg> Set Avalon8 pid-i, range 0-9999. (default: 5)
+--avalon8-pid-d <arg> Set Avalon8 pid-d, range 0-9999. (default: 0)
 --bab-options <arg> Set BaB options max:def:min:up:down:hz:delay:trf
 --bflsc-overheat <arg> Set overheat temperature where BFLSC devices throttle, 0 to disable (default: 90)
 --bitburner-fury-options <arg> Override avalon-options for BitBurner Fury boards baud:miners:asic:timeout:freq
@@ -376,6 +551,36 @@ ASIC only options:
 --bitmine-a1-options <ref_clk>:<sys_clk>:<spi_clk>:<max_chip>
 --bxf-temp-target <arg> Set target temperature for BXF devices (default: 82)
 --bxm-bits <arg>    Set BXM bits for overclocking (default: 50)
+--compac-freq <arg> Set GekkoScience Compac frequency in MHz, range 100-500 (default: 150.0)
+--dragonmint-t1-options <arg> Dragonmint T1 options ref_clk_khz:sys_clk_khz:spi_clk_khz:override_chip_num
+--T1efficient       Tune Dragonmint T1 per chain voltage and frequency for optimal efficiency
+--T1noauto          Disable Dragonmint T1 per chain auto voltage and frequency tuning
+--T1performance     Tune Dragonmint T1 per chain voltage and frequency for maximum performance
+--T1fantarget <arg> Throttle T1 frequency to keep fan less than target fan speed (default: 100)
+--T1Pll1 <arg>      Set PLL Clock 1 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll2 <arg>      Set PLL Clock 2 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll3 <arg>      Set PLL Clock 3 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll4 <arg>      Set PLL Clock 4 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll5 <arg>      Set PLL Clock 5 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll6 <arg>      Set PLL Clock 6 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll7 <arg>      Set PLL Clock 7 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Pll8 <arg>      Set PLL Clock 8 in Dragonmint T1 broad 1 chip (-1: 1000MHz, >0:Lookup PLL table) (default: 1332)
+--T1Volt1 <arg>     Dragonmint T1 set voltage 1 - VID overrides if set (390-425) (default: 404)
+--T1Volt2 <arg>     Dragonmint T1 set voltage 2 - VID overrides if set (390-425) (default: 404)
+--T1Volt3 <arg>     Dragonmint T1 set voltage 3 - VID overrides if set (390-425) (default: 404)
+--T1Volt4 <arg>     Dragonmint T1 set voltage 4 - VID overrides if set (390-425) (default: 404)
+--T1Volt5 <arg>     Dragonmint T1 set voltage 5 - VID overrides if set (390-425) (default: 404)
+--T1Volt6 <arg>     Dragonmint T1 set voltage 6 - VID overrides if set (390-425) (default: 404)
+--T1Volt7 <arg>     Dragonmint T1 set voltage 7 - VID overrides if set (390-425) (default: 404)
+--T1Volt8 <arg>     Dragonmint T1 set voltage 8 - VID overrides if set (390-425) (default: 404)
+--T1VID1 <arg>      Dragonmint T1 set VID 1 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID2 <arg>      Dragonmint T1 set VID 2 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID3 <arg>      Dragonmint T1 set VID 3 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID4 <arg>      Dragonmint T1 set VID 4 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID5 <arg>      Dragonmint T1 set VID 5 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID6 <arg>      Dragonmint T1 set VID 6 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID7 <arg>      Dragonmint T1 set VID 7 in noauto - Overrides voltage if set (1-31) (default: 0)
+--T1VID8 <arg>      Dragonmint T1 set VID 8 in noauto - Overrides voltage if set (1-31) (default: 0)
 --hfa-hash-clock <arg> Set hashfast clock speed (default: 550)
 --hfa-fail-drop <arg> Set how many MHz to drop clockspeed each failure on an overlocked hashfast device (default: 10)
 --hfa-fan <arg>     Set fanspeed percentage for hashfast, single value or range (default: 10-85)
@@ -407,25 +612,40 @@ ASICs.
 
 ---
 
-SETTING UP USB DEVICES
+SETTING UP USB DEVICES on WINDOWS/LINUX/OSX
 
 WINDOWS:
 
 On windows, the direct USB support requires the installation of a WinUSB
-driver (NOT the ftdi_sio driver), and attach it to the chosen USB device.
+driver (NOT the ftdi_sio driver), and attaching it to the chosen USB device.
+
 When configuring your device, plug it in and wait for windows to attempt to
 install a driver on its own. It may think it has succeeded or failed but wait
-for it to finish regardless. This is NOT the driver you want installed. At this
-point you need to associate your device with the WinUSB driver. The easiest
-way to do this is to use the zadig utility which you must right click on and
-run as administrator. Then once you plug in your device you can choose the
-"list all devices" from the "option" menu and you should be able to see the
-device as something like: "BitFORCE SHA256 SC". Choose the install or replace
-driver option and select WinUSB. You can either google for zadig or download
-it from the cgminer directory in the DOWNLOADS link above.
+for it to finish regardless.
 
-When you first switch a device over to WinUSB with zadig and it shows that
-correctly on the left of the zadig window, but it still gives permission
+If the driver doesn't allow mining, cgminer will get a "USB init," error message
+i.e. one of:
+ open device failed, err %d, you need to install a WinUSB driver for the device
+or
+ claim interface %d failed, err %d
+
+This means you need to associate your device with the WinUSB driver.
+
+The best solution for this is to use a tool called Zadig to set the driver:
+ https://sourceforge.net/projects/libwdi/files/zadig/
+They've moved the latest versions to:
+  https://zadig.akeo.ie/
+
+This allows you set the driver for the device to be WinUSB which is
+required to make it work if you're having problems.
+With Zadig, you will need to run it as administrator and if your device is
+plugged in but you cannot see it, use the Menu: Options -> List All Devices
+and you should be able to see the device in the drop down list as something
+like: "CompacF Bitcoin Miner"
+Choose the install or replace driver option and select WinUSB.
+
+When you first switch a device over to WinUSB with Zadig and it shows that
+correctly on the left of the Zadig window, but it still gives permission
 errors, you may need to unplug the USB miner and then plug it back in. Some
 users may need to reboot at this point.
 
@@ -471,6 +691,9 @@ modem and the driver needs to be unloaded for cgminer to work:
  sudo kextunload -b com.apple.driver.AppleUSBCDC
  sudo kextunload -b com.apple.driver.AppleUSBCDCACMData
 
+If you are running an old Mac and desktop performance is noticeably affected,
+adding the --mac-yield option may help, but also may slow down mining.
+
 There may be a limit to the number of USB devices that you are allowed to start.
 The following set of commands, followed by a reboot will increase that:
 
@@ -485,6 +708,14 @@ be started with sudo
 i.e.:
  sudo cgminer <insert commands here>
 
+
+There is a hidden option in cgminer to dump out a lot of information
+about USB that will help the developers to assist you if you are having
+problems:
+
+ --usb-dump 0
+
+It will only help if you have a working USB mining device
 
 ---
 
@@ -546,7 +777,7 @@ If one of the 10 devices stops working, hotplug - if enabled, as is default
 
 ---
 
-WHILE RUNNING:
+SCREEN DISPLAY WHILE RUNNING:
 
 The following options are available while running with a single keypress:
 
@@ -613,6 +844,7 @@ the pool. The 2 diff values are the actual difficulty target that share reached
 followed by the difficulty target the pool is currently asking for.
 
 ---
+
 Also many issues and FAQs are covered in the forum thread
 dedicated to this program,
 	http://forum.bitcoin.org/index.php?topic=28402.0
@@ -629,7 +861,7 @@ The status window is split into overall status and per device status.
 Overall status:
 
 The output line shows the following:
- (5s):2.469T (1m):2.677T (5m):2.040T (15m):1.014T (avg):2.733Th/s
+ (5s):1.398T (1m):1.322T (5m):1.305T (15m):1.309T (avg):1.317Th/s
 
 These are exponentially decaying average hashrates over 5s/1m/5m/15m and an
 average since the start.
@@ -655,13 +887,13 @@ GF is Getwork Fail Occasions (server slow to provide work)
 RF is Remote Fail occasions (server slow to accept work)
 
 Followed by:
- Connected to pool.com diff 3.45K with stratum as user me
+ Connected to stratum.kano.is diff 3.45K with stratum as user Kano
 
 The diff shown is the current vardiff requested by the pool currently being
 mined at.
 
 Followed by:
-Block: ca0d237f...  Diff:5.01G  Started: [00:14:27]  Best share: 1.18M
+Block: b1a8c743...  Diff:19T  Started: [00:14:27.666]  Best share: 1.18M
 
 This shows a short stretch about the current block, when the new block started,
 and the all time best difficulty share you've found since starting cgminer
@@ -669,7 +901,7 @@ this time.
 
 Per device status:
 
- 6: HFS Random  : 645MHz  85C  13% 0.79V  | 2.152T / 1.351Th/s
+ 0: GSF 100nnnnn: 400.00MHz  85C  13% 0.79V  | 263.5G / 263.7Gh/s WU:18901.8/m
 
 Each column is as follows:
 Temperature (if supported)
@@ -678,15 +910,15 @@ Voltage (if supported)
 
 A 5 second exponentially decaying average hash rate
 An all time average hash rate
+The work utility defined as the number of diff1 shares work / minute
 
 alternating with
 
- 6: HFS Random  : 645MHz  86C  13% 0.80V  | A:290348 R:1067 HW:88 WU:18901.8/m
+ 0: GSF 100nnnnn: 400.00MHz  86C  13% 0.80V  | A:290348 R:1067 HW:88
 
 The total difficulty of accepted shares
 The total difficulty of rejected shares
 The number of hardware erorrs
-The work utility defined as the number of diff1 shares work / minute
 
 
 LOG WINDOW
@@ -694,12 +926,12 @@ LOG WINDOW
 All running information is shown here, usually share submission results and
 block update notifications, along with device messages and warnings.
 
- [2014-03-29 00:24:09] Accepted 1397768d Diff 3.35K/2727 HFS 0 pool 0
- [2014-03-29 00:24:13] Stratum from pool 0 detected new block
-
+ [2021-09-27 11:59:04.397] Accepted 1397768d Diff 3.35K/727 GSF 0 pool 0
+ [2021-09-27 12:59:05.397] Stratum from pool 0 detected new block at height 702417
 
 ---
-MULTIPOOL
+
+MULTIPLE POOL CONNECTIONS
 
 FAILOVER STRATEGIES WITH MULTIPOOL:
 A number of different strategies for dealing with multipool setups are
@@ -741,6 +973,7 @@ and uses it to try to end up doing the same amount of work for all pools.
 
 
 ---
+
 QUOTAS
 
 The load-balance multipool strategy works off a quota based scheduler. The
@@ -781,27 +1014,13 @@ quotas in a configuration file they would be specified thus:
 
 
 ---
+
 SOLO MINING
 
-Solo mining can be done efficiently as a single pool entry or a backup to
-any other pooled mining and it is recommended everyone have solo mining set up
-as their final backup in case all their other pools are DDoSed/down for the
-security of the network. To enable solo mining, one must be running a local
-bitcoind/bitcoin-qt or have one they have rpc access to. To do this, edit your
-bitcoind configuration file (bitcoin.conf) with the following extra lines,
-using your choice of username and password:
-
-rpcuser=username
-rpcpassword=password
-
-Restart bitcoind, then start cgminer, pointing to the bitcoind and choose a
-btc address with the following options, altering to suit their setup:
-
-cgminer -o http://localhost:8332 -u username -p password --btc-address 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
-
-Note the http:// is mandatory for solo mining.
+Solo mining doesn't currently work
 
 ---
+
 LOGGING
 
 cgminer will log to stderr if it detects stderr is being redirected to a file.
@@ -933,10 +1152,6 @@ Q: The build fails with gcc is unable to build a binary.
 A: Remove the "-march=native" component of your CFLAGS as your version of gcc
 does not support it. Also -O2 is capital o 2, not zero 2.
 
-Q: Can you implement feature X?
-A: I can, but time is limited, and people who donate are more likely to get
-their feature requests implemented.
-
 Q: Work keeps going to my backup pool even though my primary pool hasn't
 failed?
 A: Cgminer checks for conditions where the primary pool is lagging and will
@@ -973,15 +1188,14 @@ mined by these devices.
 
 Q: GUI version?
 A: No. The RPC interface makes it possible for someone else to write one
-though.
+though, and miner.php can create web page access to the RPC API
 
 Q: I'm having an issue. What debugging information should I provide?
 A: Start cgminer with your regular commands and add -D -T --verbose and provide
 the full startup output and a summary of your hardware and operating system.
 
 Q: Why don't you provide win64 builds?
-A: Win32 builds work everywhere and there is precisely zero advantage to a
-64 bit build on windows.
+A: Win32 builds work everywhere.
 
 Q: Is it faster to mine on windows or linux?
 A: It makes no difference in terms of performance. It comes down to choice of
@@ -993,21 +1207,10 @@ Q: My network gets slower and slower and then dies for a minute?
 A; Try the --net-delay option if you are on a GBT server. This does nothing
 with stratum mining.
 
-Q: How do I tune for p2pool?
-A: It is also recommended to use --failover-only since the work is effectively
-like a different block chain, and not enabling --no-submit-stale. If mining with
-a BFL (fpga) minirig, it is worth adding the --bfl-range option.
-
 Q: I run PHP on windows to access the API with the example miner.php. Why does
 it fail when php is installed properly but I only get errors about Sockets not
 working in the logs?
 A: http://us.php.net/manual/en/sockets.installation.php
-
-Q: What is a PGA?
-A: Cgminer supports 3 FPGAs: BitForce, Icarus and ModMiner.
-They are Field-Programmable Gate Arrays that have been programmed to do Bitcoin
-mining. Since the acronym needs to be only 3 characters, the "Field-" part has
-been skipped.
 
 Q: What is an ASIC?
 A: They are Application Specify Integrated Circuit devices and provide the
@@ -1019,9 +1222,7 @@ A: Stratum is a protocol designed for pooled mining in such a way as to
 minimise the amount of network communications, yet scale to hardware of any
 speed. With versions of cgminer 2.8.0+, if a pool has stratum support, cgminer
 will automatically detect it and switch to the support as advertised if it can.
-If you input the stratum port directly into your configuration, or use the
-special prefix "stratum+tcp://" instead of "http://", cgminer will ONLY try to
-use stratum protocol mining. The advantages of stratum to the miner are no
+The advantages of stratum to the miner are no
 delays in getting more work for the miner, less rejects across block changes,
 and far less network communications for the same amount of mining hashrate. If
 you do NOT wish cgminer to automatically switch to stratum protocol even if it
@@ -1043,6 +1244,12 @@ every time cgminer looks for new hardware to hotplug it it can cause these
 sorts of problems. You can disable hotplug with:
 --hotplug 0
 
+Q: What is a PGA?
+A: Cgminer supports 3 FPGAs: BitForce, Icarus and ModMiner.
+They are Field-Programmable Gate Arrays that have been programmed to do Bitcoin
+mining. Since the acronym needs to be only 3 characters, the "Field-" part has
+been skipped.
+
 Q: What should my Work Utility (WU) be?
 A: Work utility is the product of hashrate * luck and only stabilises over a
 very long period of time. Assuming all your work is valid work, bitcoin mining
@@ -1059,20 +1266,31 @@ USB on any hardware are the following:
 --enable-avalon
 --enable-avalon2
 --enable-avalon4
+--enable-avalon7
+--enable-avalon8
 --enable-bflsc
 --enable-bitfury
 --enable-cointerra
 --enable-drillbit
+--enable-gekko
 --enable-hashfast
 --enable-hashratio
 --enable-icarus
 --enable-klondike
 
+Q: How do I use the --decode function to decode a pool's coinbase?
+A: You need to have a bitcoind with server functionality and pass it the
+credentials as the first pool in your config, and pass the pool's address that
+you wish to decode as the second pool configured. Note the bitcoind NEEDS the
+http:// prefix.
+
+e.g.:
+./cgminer -o http://localhost:8332 -u user -p pass -o stratum.kano.is:3333 -u cgminer --decode
+
+
 ---
 
-This code is provided entirely free of charge by the programmer in his spare
-time so donations would be greatly appreciated. Please consider donating to the
-address below.
+This code is provided entirely free of charge by the programmers.
 
-Con Kolivas <kernel@kolivas.org>
-15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
+If you wish to support it, simply mine at https://kano.is/
+

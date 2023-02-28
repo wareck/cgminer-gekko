@@ -1,7 +1,6 @@
 /*
  * Copyright 2011-2022 Andrew Smith
  * Copyright 2011-2018 Con Kolivas
- * Copyright 2011-2015 Andrew Smith
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
  *
@@ -398,12 +397,12 @@ int opt_T1_target = 100;
 #endif
 #if defined(USE_ANT_S1) || defined(USE_ANT_S2)
 char *opt_bitmain_options;
-static char *opt_set_bitmain_fan;
+char *opt_set_bitmain_fan;
 char *opt_bitmain_freq;
 // Ignored
-static bool opt_bitmain_nobeeper;
-static bool opt_bitmain_notempoverctrl;
-static bool opt_bitmain_homemode;
+bool opt_bitmain_nobeeper;
+bool opt_bitmain_notempoverctrl;
+bool opt_bitmain_homemode;
 #endif
 #ifdef USE_ANT_S2
 #ifndef USE_ANT_S3
