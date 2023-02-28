@@ -227,7 +227,7 @@ static bool get_options(__maybe_unused int this_option_offset, int *baud,
 		max = strlen(ptr);
 		if (max > BUFSIZ)
 			max = BUFSIZ;
-		strncpy(buf, ptr, max);
+		memcpy(buf, ptr, max);
 		buf[max] = '\0';
 	}
 
@@ -356,7 +356,7 @@ static bool get_options(__maybe_unused int this_option_offset, int *baud,
 		max = strlen(ptr);
 		if (max > BUFSIZ)
 			max = BUFSIZ;
-		strncpy(buf, ptr, max);
+		memcpy(buf, ptr, max);
 		buf[max] = '\0';
 	}
 
@@ -2250,7 +2250,7 @@ static void ant_info(struct bitmain_info *info, int baud, int chain_num, int asi
 		int timeout, freq;
 		size_t len;
 
-		strncpy(buf, opt_bitmain_freq, sizeof(buf));
+		memcpy(buf, opt_bitmain_freq, sizeof(buf));
 		buf[sizeof(buf)-1] = '\0';
 		colon = strchr(buf, ':');
 		if (colon)
