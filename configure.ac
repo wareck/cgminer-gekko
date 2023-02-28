@@ -861,8 +861,6 @@ AC_OUTPUT
 
 
 echo
-echo
-echo
 echo "------------------------------------------------------------------------"
 echo "$PACKAGE $VERSION"
 echo "------------------------------------------------------------------------"
@@ -889,15 +887,14 @@ else
 	echo "  libusb_internal......: $LIBUSB_LIBS"
 fi
 	echo "  curses.TUI...........: $cursesmsg"
-echo ""
+echo
 if test "x$extranonce" != xno; then
-	echo "  extranonce.subscribe.: Enabled"
+	echo "  Extranonce.subscribe.: Enabled"
 else
-        echo "  extranonce.subscribe.: Disabled"
+        echo "  Extranonce.subscribe.: Disabled"
 fi
 
-echo ""
-
+echo
 
 if test "x$ants1" = xyes; then
 	echo "  Antminer.S1.Bitmain..: Enabled"
