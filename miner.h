@@ -1022,7 +1022,7 @@ struct pool;
 extern bool opt_mac_yield;
 extern bool opt_widescreen;
 extern bool opt_work_update;
-#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALONLC3) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
 extern bool opt_clean_jobs;
 extern int opt_force_clean_jobs;
 #endif
