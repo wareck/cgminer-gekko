@@ -10,28 +10,19 @@ Then i added v.thoang gekko drivers and kanoi upgrade, avalon updates , xtranonc
 
 (you can refer to original documentation to docs/README)
 
-### GekkoScience compac Usb miner ##
+### GekkoScience compac & 2pac Usb miner ##
 <p align="center">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko.jpg">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg">
 </p>
 
-### GekkoScience 2pac Usb miner ##
-<p align="center">
-<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg">
-</p>
-
-### GekkoScience Newpac Usb miner ##
+### GekkoScience Newpac && CompacF Usb miner ##
 <p align="center">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg">
-</p>
-
-### GekkoScience CompacF Usb miner ##
-<p align="center">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/compacf.png">
 </p>
 
-### GekkoScience Terminus r606 ##
+### GekkoScience Terminus r606 / R909 ##
 <p align="center">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/terminus.jpg">
 </p>
