@@ -889,14 +889,14 @@ else
 	echo "  libusb_internal......: $LIBUSB_LIBS"
 fi
 	echo "  curses.TUI...........: $cursesmsg"
-
+echo ""
 if test "x$extranonce" != xno; then
 	echo "  extranonce.subscribe.: Enabled"
 else
         echo "  extranonce.subscribe.: Disabled"
 fi
 
-	echo ""
+echo ""
 
 
 if test "x$ants1" = xyes; then
