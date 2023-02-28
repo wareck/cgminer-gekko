@@ -1,6 +1,6 @@
-### ########################################################################
-##  CGminer 4.12.1 GekkoScience Compac, 2pac & Newpack & CompacF & terminus#
-### ########################################################################
+### #########################################################################
+##  CGminer 4.12.1 GekkoScience Compac, 2pac & Newpack & CompacF & terminus #
+### #########################################################################
 
 This is cgminer 4.12.1 with support for GekkoScience Compac, CompacF, 2pac.
 
