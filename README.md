@@ -1,6 +1,6 @@
-### #####################################################################
-##  CGminer 4.12.1 GekkoScience Compac, 2pac & Newpack BM1384 & CompacF #
-### #####################################################################
+### ########################################################################
+##  CGminer 4.12.1 GekkoScience Compac, 2pac & Newpack & CompacF & terminus#
+### ########################################################################
 
 This is cgminer 4.12.1 with support for GekkoScience Compac, CompacF, 2pac.
 
@@ -16,7 +16,7 @@ Then i added v.thoang gekko drivers and kanoi upgrade, avalon updates , xtranonc
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg">
 </p>
 
-### GekkoScience Newpac && CompacF Usb miner ##
+### GekkoScience Newpac & CompacF Usb miner ##
 <p align="center">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/newpac.jpg">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/compacf.png">
