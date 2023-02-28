@@ -12,7 +12,7 @@ Then i added v.thoang gekko drivers and kanoi upgrade, avalon updates , xtranonc
 
 ### GekkoScience compac & 2pac Usb miner ##
 <p align="center">
-<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko.jpg">
+<img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/gekko2.jpg">
 <img src="https://raw.githubusercontent.com/wareck/cgminer-gekko/master/docs/2pac.jpg">
 </p>
 
