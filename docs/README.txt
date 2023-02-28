@@ -339,6 +339,36 @@ Options for both config file and command line:
 --avalon9-pid-i <arg> Set Avalon9 pid-i, range 0-9999. (default: 5)
 --avalon9-pid-d <arg> Set Avalon9 pid-d, range 0-9999. (default: 0)
 --avalon9-adjust-volt-info Set Avalon9 adjust volt info, range 0-9999
+--avalonlc3-voltage-level Set Avalonlc3 default level of core voltage, range:[0, 31], step: 1
+--avalonlc3-voltage-level-offset Set Avalonlc3 default offset of core voltage level, range:[-2, 1], step: 1
+--avalonlc3-freq    Set Avalonlc3 default frequency, range:[25, 1200], step: 25, example: 800
+--avalonlc3-freq-sel <arg> Set Avalonlc3 default frequency select, range:[0, 4], step: 1, example: 3 (default: 3)
+--avalonlc3-fan     Set Avalonlc3 target fan speed, range:[0, 100], step: 1, example: 0-100
+--avalonlc3-temp <arg> Set Avalonlc3 target temperature, range:[0, 100] (default: 90)
+--avalonlc3-polling-delay <arg> Set Avalonlc3 polling delay value (ms) (default: 20)
+--avalonlc3-aucspeed <arg> Set AUC3 IIC bus speed (default: 400000)
+--avalonlc3-aucxdelay <arg> Set AUC3 IIC xfer read delay, 4800 ~= 1ms (default: 19200)
+--avalonlc3-smart-speed <arg> Set Avalonlc3 smart speed, range 0-1. 0 means Disable (default: 1)
+--avalonlc3-th-pass <arg> Set A3210M th pass value (default: 200)
+--avalonlc3-th-fail <arg> Set A3210M th fail value (default: 7000)
+--avalonlc3-th-init <arg> Set A3210M th init value (default: 32767)
+--avalonlc3-th-ms <arg> Set A3210M th ms value (default: 5)
+--avalonlc3-th-timeout <arg> Set A3210M th timeout value (default: 16000)
+--avalonlc3-th-add <arg> Set A3210M th add value (default: 1)
+--avalonlc3-iic-detect Enable Avalonlc3 detect through iic controller
+--avalonlc3-nonce-mask <arg> Set A3210M nonce mask, range 24-32. (default: 27)
+--avalonlc3-nonce-check <arg> Set A3210M nonce check, range 0-1. (default: 1)
+--avalonlc3-roll-enable <arg> Set A3210M roll enable, range 0-1. (default: 1)
+--avalonlc3-mux-l2h <arg> Set Avalonlc3 mux l2h, range 0-2. (default: 0)
+--avalonlc3-mux-h2l <arg> Set Avalonlc3 mux h2l, range 0-1. (default: 1)
+--avalonlc3-h2ltime0-spd <arg> Set Avalonlc3 h2ltime0 spd, range 0-255. (default: 3)
+--avalonlc3-spdlow <arg> Set Avalonlc3 spdlow, range 0-3. (default: 2)
+--avalonlc3-spdhigh <arg> Set Avalonlc3 spdhigh, range 0-3. (default: 3)
+--avalonlc3-tbase <arg> Set Avalonlc3 tbase and use (0-8) bits, range 0-255. (default: 0)
+--avalonlc3-cinfo-asic Set Avalonlc3 cinfo asic index, range:[0, 25], step: 1
+--avalonlc3-pid-p <arg> Set Avalonlc3 pid-p, range 0-9999. (default: 2)
+--avalonlc3-pid-i <arg> Set Avalonlc3 pid-i, range 0-9999. (default: 5)
+--avalonlc3-pid-d <arg> Set Avalonlc3 pid-d, range 0-9999. (default: 0)
 --bab-options <arg> Set BaB options max:def:min:up:down:hz:delay:trf
 --balance           Change multipool strategy from failover to even share balance
 --benchfile <arg>   Run cgminer in benchmark mode using a work file - produces no shares
@@ -629,7 +659,36 @@ ASIC only options:
 --avalon9-pid-i <arg> Set Avalon9 pid-i, range 0-9999. (default: 5)
 --avalon9-pid-d <arg> Set Avalon9 pid-d, range 0-9999. (default: 0)
 --avalon9-adjust-volt-info Set Avalon9 adjust volt info, range 0-9999
-
+--avalonlc3-voltage-level Set Avalonlc3 default level of core voltage, range:[0, 31], step: 1
+--avalonlc3-voltage-level-offset Set Avalonlc3 default offset of core voltage level, range:[-2, 1], step: 1
+--avalonlc3-freq    Set Avalonlc3 default frequency, range:[25, 1200], step: 25, example: 800
+--avalonlc3-freq-sel <arg> Set Avalonlc3 default frequency select, range:[0, 4], step: 1, example: 3 (default: 3)
+--avalonlc3-fan     Set Avalonlc3 target fan speed, range:[0, 100], step: 1, example: 0-100
+--avalonlc3-temp <arg> Set Avalonlc3 target temperature, range:[0, 100] (default: 90)
+--avalonlc3-polling-delay <arg> Set Avalonlc3 polling delay value (ms) (default: 20)
+--avalonlc3-aucspeed <arg> Set AUC3 IIC bus speed (default: 400000)
+--avalonlc3-aucxdelay <arg> Set AUC3 IIC xfer read delay, 4800 ~= 1ms (default: 19200)
+--avalonlc3-smart-speed <arg> Set Avalonlc3 smart speed, range 0-1. 0 means Disable (default: 1)
+--avalonlc3-th-pass <arg> Set A3210M th pass value (default: 200)
+--avalonlc3-th-fail <arg> Set A3210M th fail value (default: 7000)
+--avalonlc3-th-init <arg> Set A3210M th init value (default: 32767)
+--avalonlc3-th-ms <arg> Set A3210M th ms value (default: 5)
+--avalonlc3-th-timeout <arg> Set A3210M th timeout value (default: 16000)
+--avalonlc3-th-add <arg> Set A3210M th add value (default: 1)
+--avalonlc3-iic-detect Enable Avalonlc3 detect through iic controller
+--avalonlc3-nonce-mask <arg> Set A3210M nonce mask, range 24-32. (default: 27)
+--avalonlc3-nonce-check <arg> Set A3210M nonce check, range 0-1. (default: 1)
+--avalonlc3-roll-enable <arg> Set A3210M roll enable, range 0-1. (default: 1)
+--avalonlc3-mux-l2h <arg> Set Avalonlc3 mux l2h, range 0-2. (default: 0)
+--avalonlc3-mux-h2l <arg> Set Avalonlc3 mux h2l, range 0-1. (default: 1)
+--avalonlc3-h2ltime0-spd <arg> Set Avalonlc3 h2ltime0 spd, range 0-255. (default: 3)
+--avalonlc3-spdlow <arg> Set Avalonlc3 spdlow, range 0-3. (default: 2)
+--avalonlc3-spdhigh <arg> Set Avalonlc3 spdhigh, range 0-3. (default: 3)
+--avalonlc3-tbase <arg> Set Avalonlc3 tbase and use (0-8) bits, range 0-255. (default: 0)
+--avalonlc3-cinfo-asic Set Avalonlc3 cinfo asic index, range:[0, 25], step: 1
+--avalonlc3-pid-p <arg> Set Avalonlc3 pid-p, range 0-9999. (default: 2)
+--avalonlc3-pid-i <arg> Set Avalonlc3 pid-i, range 0-9999. (default: 5)
+--avalonlc3-pid-d <arg> Set Avalonlc3 pid-d, range 0-9999. (default: 0)
 --bab-options <arg> Set BaB options max:def:min:up:down:hz:delay:trf
 --bflsc-overheat <arg> Set overheat temperature where BFLSC devices throttle, 0 to disable (default: 90)
 --bitburner-fury-options <arg> Override avalon-options for BitBurner Fury boards baud:miners:asic:timeout:freq
