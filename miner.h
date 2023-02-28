@@ -607,7 +607,7 @@ struct thr_info {
 
 	bool	work_restart;
 	bool	work_update;
-#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
+#if defined (USE_AVALON2) || defined (USE_AVALON4) || defined (USE_AVALON7) || defined (USE_AVALON8) || defined (USE_AVALON9) || defined (USE_AVALONLC3) || defined (USE_AVALON_MINER) || defined (USE_HASHRATIO)
 	bool	clean_jobs;
 #endif
 };
