@@ -75,7 +75,11 @@ Inside you can find a cgminer_run.bat file and you can adjust you settings.
 You can use your miner with last extranonce support for nicehash by adding #xnsub at the address end, like this:
 
 	./cgminer -o stratum+tcp://sha256.eu.nicehash.com:3334#xnsub -u my_btc_address -p x --gekko-compac-freq 200 --gekko-2pac-freq 150 --gekko-newpac-freq 150
-	
+
+### For Raspberry Users : ###
+
+You may need to use "legacy" version of raspberry OS (32 or 64 bit no matter).
+
 ## Credits
 ```
 Kanoi    : https://github.com/kanoi/cgminer.git (code update to 4.12.0 and gekko driver improvement)
