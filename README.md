@@ -35,7 +35,7 @@ to build this specific code on linux:
 
 	sudo apt-get update -y
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
-	libjansson-dev libncurses5-dev libusb-1.0-0-dev zlib1g-dev -y
+	libjansson-dev libncurses5-dev libusb-1.0-0-dev zlib1g-dev git -y
 
 	git clone https://github.com/wareck/cgminer-gekko.git
 
