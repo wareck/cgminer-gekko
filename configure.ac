@@ -1016,7 +1016,6 @@ else
 	echo "  Bitmain.ASICs........: Disabled"
 fi
 
-
 if test "x$blockerupter" = xyes; then
 	echo "  BlockErupter.ASICs...: Enabled"
 else
@@ -1069,12 +1068,6 @@ if test "x$drillbit" = xyes; then
 	echo "  Drillbit.BitFury.....: Enabled"
 else
 	echo "  Drillbit.BitFury.....: Disabled"
-fi
-
-if test "x$gekko" = xyes; then
-        echo "  GekkoScience.ASICs...: Enabled"
-else
-        echo "  GekkoScience.ASICs...: Disabled"
 fi
 
 if test "x$hashfast" = xyes; then
