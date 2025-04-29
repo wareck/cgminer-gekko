@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Andrew Smith
+ * Copyright 2012-2024 Andrew Smith
  * Copyright 2013-2014 Con Kolivas <kernel@kolivas.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -98,9 +98,25 @@
 // For 0x10c4:0xea60 USB cp210x chip - AMU
 #define CP210X_TYPE_OUT 0x41
 
+// all
+#define CP210X_TYPE_HOST_TO_DEVICE 0x40
+#define CP210X_TYPE_HOST_TO_INTERFACE 0x41
+#define CP210X_TYPE_DEVICE_TO_HOST 0xc0
+#define CP210X_TYPE_INTERFACE_TO_HOST 0xc1
+
 #define CP210X_REQUEST_IFC_ENABLE 0x00
 #define CP210X_REQUEST_DATA 0x07
+#define CP210X_REQUEST_RESET 0x11
+#define CP210X_REQUEST_GET_FLOW 0x13
+#define CP210X_REQUEST_SET_FLOW 0x14
 #define CP210X_REQUEST_BAUD 0x1e
+#define CP210X_REQUEST_SET_MHS 0x07
+
+#define CP210X_VENDOR_SPECIFIC	0xFF
+
+#define CP210X_READ_LATCH 0x00C2
+#define CP210X_WRITE_LATCH 0x37E1
+#define CP210X_VALUE_RTS_ECI_ON 0x4000
 
 #define CP210X_VALUE_UART_ENABLE 0x0001
 #define CP210X_VALUE_DATA 0x0303
@@ -109,9 +125,65 @@
 #define CP210X_SET_LINE_CTL 0x03
 #define CP210X_BITS_DATA_MASK 0x0f00
 #define CP210X_BITS_DATA_8 0x0800
+#define CP210X_BITS_PARITY_NONE 0x0000
+#define CP210X_BITS_PARITY_ODD 0x0010
+#define CP210X_BITS_PARITY_EVEN 0x0020
 #define CP210X_BITS_PARITY_MARK 0x0030
 #define CP210X_BITS_PARITY_SPACE 0x0040
+#define CP210X_BITS_STOP_1 0x0000
+#define CP210X_BITS_STOP_15 0x0001
+#define CP210X_BITS_STOP_2 0x0002
 
+typedef struct
+{
+	uint16_t Mode; // Push-Pull = 1, Open-Drain = 0
+	uint16_t Reset_Latch; // Logic High = 1, Logic Low = =0
+	uint16_t Suspend_Latch; // Logic High = 1, Logic Low = =0
+	unsigned char EnhancedFxn_ECI;
+	unsigned char EnhancedFxn_SCI;
+	unsigned char EnhancedFxn_Device;
+} CP2105_PORT_CONFIG;
+
+// MCP2210 cmds
+#define MCP2210_GET_STATUS 0x10
+#define MCP2210_SPI_CANCEL 0x11
+#define MCP2210_GET_INT_COUNT 0x12
+#define MCP2210_GET_GPIO_SETTINGS 0x20
+#define MCP2210_SET_SETTINGS 0x21
+#define MCP2210_SET_GPIO_PIN_VAL 0x30
+#define MCP2210_GET_GPIO_PIN_VAL 0x31
+#define MCP2210_SET_GPIO_PIN_DIR 0x32
+#define MCP2210_GET_GPIO_PIN_DIR 0x33
+#define MCP2210_SET_SPI_SETTINGS 0x40
+#define MCP2210_GET_SPI_SETTINGS 0x41
+#define MCP2210_SPI_TRANSFER 0x42
+#define MCP2210_READ_EEPROM 0x50
+#define MCP2210_WRITE_EEPROM 0x51
+#define MCP2210_SET_NVRAM_SETTINGS 0x60
+#define MCP2210_GET_NVRAM_SETTINGS 0x61
+#define MCP2210_SEND_ACCESS 0x70
+#define MCP2210_SPI_BUS_RELEASE 0x80
+// 2nd byte reply (1st byte = cmd sent)
+#define MCP2210_CMD_OK 0x00
+#define MCP2210_SPI_UNAVAILABLE 0xF7
+#define MCP2210_SPI_BUSY 0xF8
+#define MCP2210_CMD_UNKNOWN 0xF9
+// SPI valid transfer reply status - 4th byte (3rd = size)
+#define MCP2210_SPI_FINISHED 0x10
+#define MCP2210_SPI_STARTED 0x20
+#define MCP2210_SPI_PARTIAL 0x30
+
+// SPI Setting Fields
+// 4 bytes low->hi
+#define MCP2210_BAUD_SPI 4
+// 2 bytes low->hi
+#define MCP2210_IDLE_CHIP_SEL 10
+// 2 bytes low->hi
+#define MCP2210_ACTIVE_CHIP_SEL 12
+// 2 bytes low->hi
+#define MCP2210_SPI_BYTES 18
+// 1 byte
+#define MCP2210_SPI_MODE 20
 
 // For 0x067b:0x2303 Prolific PL2303 - ICA
 #define PL2303_CTRL_DTR 0x01
@@ -194,6 +266,7 @@ enum sub_ident {
 	IDENT_CMR2,
 	IDENT_CTA,
 	IDENT_DRB,
+	IDENT_FLX,
 	IDENT_GSC,
 	IDENT_GSD,
 	IDENT_GSE,
@@ -201,6 +274,8 @@ enum sub_ident {
 	IDENT_GSI,
 	IDENT_GSF,
 	IDENT_GSFM,
+	IDENT_GSA1,
+	IDENT_GSK,
 	IDENT_HFA,
 	IDENT_HRO,
 	IDENT_ICA,
@@ -381,6 +456,8 @@ struct cg_usb_info {
 	USB_ADD_COMMAND(C_VENDOR, "Vendor") \
 	USB_ADD_COMMAND(C_SETFAN, "SetFan") \
 	USB_ADD_COMMAND(C_FANREPLY, "GetFan") \
+	USB_ADD_COMMAND(C_SETLED, "SetLED") \
+	USB_ADD_COMMAND(C_SETPOWER, "SetPower") \
 	USB_ADD_COMMAND(C_AVALON_TASK, "AvalonTask") \
 	USB_ADD_COMMAND(C_AVALON_READ, "AvalonRead") \
 	USB_ADD_COMMAND(C_GET_AVALON_READY, "AvalonReady") \

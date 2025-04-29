@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Andrew Smith
+ * Copyright 2011-2024 Andrew Smith
  * Copyright 2011-2018 Con Kolivas
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
@@ -329,6 +329,13 @@ static char *opt_set_avalonm_freq;
 #ifdef USE_BLOCKERUPTER
 int opt_bet_clk = 0;
 #endif
+#ifdef USE_FLOW
+char *opt_flow_serial = NULL;
+int opt_flow_start_freq = 100;
+float opt_flow_step_freq = 5.0;
+float opt_flow_freq = 300;
+int opt_flow_tune = 0;
+#endif
 #ifdef USE_GEKKO
 char *opt_gekko_serial = NULL;
 bool opt_gekko_noboost = 0;
@@ -340,6 +347,8 @@ bool opt_gekko_gsh_detect = 0;
 bool opt_gekko_gsi_detect = 0;
 bool opt_gekko_gsf_detect = 0;
 bool opt_gekko_r909_detect = 0;
+bool opt_gekko_gsa1_detect = 0;
+bool opt_gekko_gsk_detect = 0;
 float opt_gekko_gsc_freq = 150;
 float opt_gekko_gsd_freq = 100;
 float opt_gekko_gse_freq = 150;
@@ -357,12 +366,16 @@ int opt_gekko_gsh_freq = 100;
 int opt_gekko_gsi_freq = 550;
 int opt_gekko_gsf_freq = 200;
 int opt_gekko_r909_freq = 450;
+int opt_gekko_gsa1_freq = 300;
+int opt_gekko_gsk_freq = 200;
 int opt_gekko_bauddiv = 0;
 int opt_gekko_gsh_vcore = 400;
 int opt_gekko_start_freq = 100;
 int opt_gekko_step_delay = 15;
 bool opt_gekko_mine2 = false; // gekko code ignores it
 int opt_gekko_tune2 = 0;
+int opt_gekko_gsa1_start_freq = 300;
+int opt_gekko_gsa1_corev = 300; // 0x3c
 #endif
 #ifdef USE_HASHRATIO
 #include "driver-hashratio.h"
@@ -742,7 +755,7 @@ static struct cgpu_info *get_thr_cgpu(int thr_id)
 	return thr->cgpu;
 }
 
-struct cgpu_info *get_devices(int id)
+struct cgpu_info *get_a_device(int id)
 {
 	struct cgpu_info *cgpu;
 
@@ -1700,8 +1713,8 @@ static struct opt_table opt_config_table[] = {
 		     set_avalon8_freq, NULL, &opt_set_avalon8_freq,
 		     "Set Avalon8 default frequency, range:[25, 1200], step: 25, example: 800"),
 	OPT_WITH_ARG("--avalon8-freq-sel",
-		     set_int_0_to_7, opt_show_intval, &opt_avalon8_freq_sel,
-		     "Set Avalon8 default frequency select, range:[0, 7], step: 1, example: 7"),
+		     set_int_0_to_3, opt_show_intval, &opt_avalon8_freq_sel,
+		     "Set Avalon8 default frequency select, range:[0, 3], step: 1, example: 3"),
 	OPT_WITH_CBARG("--avalon8-fan",
 		     set_avalon8_fan, NULL, &opt_set_avalon8_fan,
 		     "Set Avalon8 target fan speed, range:[0, 100], step: 1, example: 0-100"),
@@ -1798,229 +1811,24 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--avalon8-h2ltime0-spd",
 		     set_int_0_to_255, opt_show_intval, &opt_avalon8_h2ltime0_spd,
 		     "Set Avalon8 h2ltime0 spd, range 0-255."),
-#endif
-#ifdef USE_AVALON9
-	OPT_WITH_CBARG("--avalon9-voltage-level",
-		     set_avalon9_voltage_level, NULL, &opt_set_avalon9_voltage_level,
-		     "Set Avalon9 default level of core voltage, range:[0, 15], step: 1"),
-	OPT_WITH_CBARG("--avalon9-voltage-level-offset",
-		     set_avalon9_voltage_level_offset, NULL, &opt_set_avalon9_voltage_level_offset,
-		     "Set Avalon9 default offset of core voltage level, range:[-2, 1], step: 1"),
-	OPT_WITH_CBARG("--avalon9-freq",
-		     set_avalon9_freq, NULL, &opt_set_avalon9_freq,
-		     "Set Avalon9 default frequency, range:[25, 1200], step: 25, example: 800"),
-	OPT_WITH_ARG("--avalon9-freq-sel",
-		     set_int_0_to_7, opt_show_intval, &opt_avalon9_freq_sel,
-		     "Set Avalon9 default frequency select, range:[0, 7], step: 1, example: 7"),
-	OPT_WITH_CBARG("--avalon9-fan",
-		     set_avalon9_fan, NULL, &opt_set_avalon9_fan,
-		     "Set Avalon9 target fan speed, range:[0, 100], step: 1, example: 0-100"),
-	OPT_WITH_ARG("--avalon9-temp",
-		     set_int_0_to_100, opt_show_intval, &opt_avalon9_temp_target,
-		     "Set Avalon9 target temperature, range:[0, 100]"),
-	OPT_WITH_ARG("--avalon9-polling-delay",
-		     set_int_1_to_65535, opt_show_intval, &opt_avalon9_polling_delay,
-		     "Set Avalon9 polling delay value (ms)"),
-	OPT_WITH_ARG("--avalon9-aucspeed",
-		     opt_set_intval, opt_show_intval, &opt_avalon9_aucspeed,
-		     "Set AUC3 IIC bus speed"),
-	OPT_WITH_ARG("--avalon9-aucxdelay",
-		     opt_set_intval, opt_show_intval, &opt_avalon9_aucxdelay,
-		     "Set AUC3 IIC xfer read delay, 4800 ~= 1ms"),
-	OPT_WITH_ARG("--avalon9-smart-speed",
-		     opt_set_intval, opt_show_intval, &opt_avalon9_smart_speed,
-		     "Set Avalon9 smart speed, range 0-1. 0 means Disable"),
-	OPT_WITH_ARG("--avalon9-th-pass",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalon9_th_pass,
-		     "Set A3206 th pass value"),
-	OPT_WITH_ARG("--avalon9-th-fail",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalon9_th_fail,
-		     "Set A3206 th fail value"),
-	OPT_WITH_ARG("--avalon9-th-init",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalon9_th_init,
-		     "Set A3206 th init value"),
-	OPT_WITH_ARG("--avalon9-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_th_ms,
-		     "Set A3206 th ms value"),
-	OPT_WITH_ARG("--avalon9-th-timeout",
-		     opt_set_uintval, opt_show_uintval, &opt_avalon9_th_timeout,
-		     "Set A3206 th timeout value"),
-	OPT_WITH_ARG("--avalon9-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_th_add,
-		     "Set A3206 th add value"),
-	OPT_WITH_ARG("--avalon9-th-mssel",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_th_mssel,
-		     "Set A3206 th mssel value"),
-	OPT_WITH_ARG("--avalon9-lv2-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_lv2_th_add,
-		     "Set A3206 lv2 th add value"),
-	OPT_WITH_ARG("--avalon9-lv2-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_lv2_th_ms,
-		     "Set A3206 lv2 th ms value"),
-	OPT_WITH_ARG("--avalon9-lv3-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_lv3_th_add,
-		     "Set A3206 lv3 th add value"),
-	OPT_WITH_ARG("--avalon9-lv3-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_lv3_th_ms,
-		     "Set A3206 lv3 th ms value"),
-	OPT_WITH_ARG("--avalon9-lv4-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_lv4_th_add,
-		     "Set A3206 lv4 th add value"),
-	OPT_WITH_ARG("--avalon9-lv4-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_lv4_th_ms,
-		     "Set A3206 lv4 th ms value"),
-	OPT_WITH_ARG("--avalon9-lv5-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_lv5_th_add,
-		     "Set A3206 lv5 th add value"),
-	OPT_WITH_ARG("--avalon9-lv5-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_lv5_th_ms,
-		     "Set A3206 lv5 th ms value"),
-	OPT_WITH_ARG("--avalon9-lv6-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_lv6_th_add,
-		     "Set A3206 lv6 th add value"),
-	OPT_WITH_ARG("--avalon9-lv6-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_lv6_th_ms,
-		     "Set A3206 lv6 th ms value"),
-	OPT_WITH_ARG("--avalon9-lv7-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_lv7_th_add,
-		     "Set A3206 lv7 th add value"),
-	OPT_WITH_ARG("--avalon9-lv7-th-ms",
-		     set_int_0_to_32767, opt_show_intval, &opt_avalon9_lv7_th_ms,
-		     "Set A3206 lv7 th ms value"),
-	OPT_WITHOUT_ARG("--avalon9-iic-detect",
-		     opt_set_bool, &opt_avalon9_iic_detect,
-		     "Enable Avalon9 detect through iic controller"),
-	OPT_WITH_ARG("--avalon9-nonce-mask",
-		     set_int_24_to_32, opt_show_intval, &opt_avalon9_nonce_mask,
-		     "Set A3206 nonce mask, range 24-32."),
-	OPT_WITH_ARG("--avalon9-nonce-check",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_nonce_check,
-		     "Set A3206 nonce check, range 0-1."),
-	OPT_WITH_ARG("--avalon9-roll-enable",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_roll_enable,
-		     "Set A3206 roll enable, range 0-1."),
-	OPT_WITH_ARG("--avalon9-mux-l2h",
-		     set_int_0_to_2, opt_show_intval, &opt_avalon9_mux_l2h,
-		     "Set Avalon9 mux l2h, range 0-2."),
-	OPT_WITH_ARG("--avalon9-mux-h2l",
-		     set_int_0_to_1, opt_show_intval, &opt_avalon9_mux_h2l,
-		     "Set Avalon9 mux h2l, range 0-1."),
-	OPT_WITH_ARG("--avalon9-h2ltime0-spd",
-		     set_int_0_to_255, opt_show_intval, &opt_avalon9_h2ltime0_spd,
-		     "Set Avalon9 h2ltime0 spd, range 0-255."),
-	OPT_WITH_ARG("--avalon9-spdlow",
-		     set_int_0_to_7, opt_show_intval, &opt_avalon9_spdlow,
-		     "Set Avalon9 spdlow, range 0-7."),
-	OPT_WITH_ARG("--avalon9-spdhigh",
-		     set_int_0_to_7, opt_show_intval, &opt_avalon9_spdhigh,
-		     "Set Avalon9 spdhigh, range 0-7."),
-	OPT_WITH_ARG("--avalon9-tbase",
-		     set_int_0_to_255, opt_show_intval, &opt_avalon9_tbase,
-		     "Set Avalon9 tbase and use (0-8) bits, range 0-255."),
-	OPT_WITH_ARG("--avalon9-pid-p",
-		     set_int_0_to_9999, opt_show_intval, &opt_avalon9_pid_p,
-		     "Set Avalon9 pid-p, range 0-9999."),
-	OPT_WITH_ARG("--avalon9-pid-i",
-		     set_int_0_to_9999, opt_show_intval, &opt_avalon9_pid_i,
-		     "Set Avalon9 pid-i, range 0-9999."),
-	OPT_WITH_ARG("--avalon9-pid-d",
-		     set_int_0_to_9999, opt_show_intval, &opt_avalon9_pid_d,
-		     "Set Avalon9 pid-d, range 0-9999."),
-	OPT_WITH_CBARG("--avalon9-adjust-volt-info",
-		     set_avalon9_adjust_volt_info, NULL, &opt_set_avalon9_adjust_volt_info,
-		     "Set Avalon9 adjust volt info, range 0-9999"),
-#endif
-#ifdef USE_AVALONLC3
-	OPT_WITH_CBARG("--avalonlc3-voltage-level",
-		     set_avalonlc3_voltage_level, NULL, &opt_set_avalonlc3_voltage_level,
-		     "Set Avalonlc3 default level of core voltage, range:[0, 31], step: 1"),
-	OPT_WITH_CBARG("--avalonlc3-voltage-level-offset",
-		     set_avalonlc3_voltage_level_offset, NULL, &opt_set_avalonlc3_voltage_level_offset,
-		     "Set Avalonlc3 default offset of core voltage level, range:[-2, 1], step: 1"),
-	OPT_WITH_CBARG("--avalonlc3-freq",
-		     set_avalonlc3_freq, NULL, &opt_set_avalonlc3_freq,
-		     "Set Avalonlc3 default frequency, range:[25, 1200], step: 25, example: 800"),
-	OPT_WITH_ARG("--avalonlc3-freq-sel",
-		     set_int_0_to_4, opt_show_intval, &opt_avalonlc3_freq_sel,
-		     "Set Avalonlc3 default frequency select, range:[0, 4], step: 1, example: 3"),
-	OPT_WITH_CBARG("--avalonlc3-fan",
-		     set_avalonlc3_fan, NULL, &opt_set_avalonlc3_fan,
-		     "Set Avalonlc3 target fan speed, range:[0, 100], step: 1, example: 0-100"),
-	OPT_WITH_ARG("--avalonlc3-temp",
-		     set_int_0_to_100, opt_show_intval, &opt_avalonlc3_temp_target,
-		     "Set Avalonlc3 target temperature, range:[0, 100]"),
-	OPT_WITH_ARG("--avalonlc3-polling-delay",
-		     set_int_1_to_65535, opt_show_intval, &opt_avalonlc3_polling_delay,
-		     "Set Avalonlc3 polling delay value (ms)"),
-	OPT_WITH_ARG("--avalonlc3-aucspeed",
-		     opt_set_intval, opt_show_intval, &opt_avalonlc3_aucspeed,
-		     "Set AUC3 IIC bus speed"),
-	OPT_WITH_ARG("--avalonlc3-aucxdelay",
-		     opt_set_intval, opt_show_intval, &opt_avalonlc3_aucxdelay,
-		     "Set AUC3 IIC xfer read delay, 4800 ~= 1ms"),
-	OPT_WITH_ARG("--avalonlc3-smart-speed",
-		     opt_set_intval, opt_show_intval, &opt_avalonlc3_smart_speed,
-		     "Set Avalonlc3 smart speed, range 0-1. 0 means Disable"),
-	OPT_WITH_ARG("--avalonlc3-th-pass",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalonlc3_th_pass,
-		     "Set A3210M th pass value"),
-	OPT_WITH_ARG("--avalonlc3-th-fail",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalonlc3_th_fail,
-		     "Set A3210M th fail value"),
-	OPT_WITH_ARG("--avalonlc3-th-init",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalonlc3_th_init,
-		     "Set A3210M th init value"),
-	OPT_WITH_ARG("--avalonlc3-th-ms",
-		     set_int_0_to_65535, opt_show_intval, &opt_avalonlc3_th_ms,
-		     "Set A3210M th ms value"),
-	OPT_WITH_ARG("--avalonlc3-th-timeout",
-		     opt_set_uintval, opt_show_uintval, &opt_avalonlc3_th_timeout,
-		     "Set A3210M th timeout value"),
-	OPT_WITH_ARG("--avalonlc3-th-add",
-		     set_int_0_to_1, opt_show_intval, &opt_avalonlc3_th_add,
-		     "Set A3210M th add value"),
-	OPT_WITHOUT_ARG("--avalonlc3-iic-detect",
-		     opt_set_bool, &opt_avalonlc3_iic_detect,
-		     "Enable Avalonlc3 detect through iic controller"),
-	OPT_WITH_ARG("--avalonlc3-nonce-mask",
-		     set_int_24_to_32, opt_show_intval, &opt_avalonlc3_nonce_mask,
-		     "Set A3210M nonce mask, range 24-32."),
-	OPT_WITH_ARG("--avalonlc3-nonce-check",
-		     set_int_0_to_1, opt_show_intval, &opt_avalonlc3_nonce_check,
-		     "Set A3210M nonce check, range 0-1."),
-	OPT_WITH_ARG("--avalonlc3-roll-enable",
-		     set_int_0_to_1, opt_show_intval, &opt_avalonlc3_roll_enable,
-		     "Set A3210M roll enable, range 0-1."),
-	OPT_WITH_ARG("--avalonlc3-mux-l2h",
-		     set_int_0_to_2, opt_show_intval, &opt_avalonlc3_mux_l2h,
-		     "Set Avalonlc3 mux l2h, range 0-2."),
-	OPT_WITH_ARG("--avalonlc3-mux-h2l",
-		     set_int_0_to_1, opt_show_intval, &opt_avalonlc3_mux_h2l,
-		     "Set Avalonlc3 mux h2l, range 0-1."),
-	OPT_WITH_ARG("--avalonlc3-h2ltime0-spd",
-		     set_int_0_to_255, opt_show_intval, &opt_avalonlc3_h2ltime0_spd,
-		     "Set Avalonlc3 h2ltime0 spd, range 0-255."),
-	OPT_WITH_ARG("--avalonlc3-spdlow",
-		     set_int_0_to_3, opt_show_intval, &opt_avalonlc3_spdlow,
-		     "Set Avalonlc3 spdlow, range 0-3."),
-	OPT_WITH_ARG("--avalonlc3-spdhigh",
-		     set_int_0_to_3, opt_show_intval, &opt_avalonlc3_spdhigh,
-		     "Set Avalonlc3 spdhigh, range 0-3."),
-	OPT_WITH_ARG("--avalonlc3-tbase",
-		     set_int_0_to_255, opt_show_intval, &opt_avalonlc3_tbase,
-		     "Set Avalonlc3 tbase and use (0-8) bits, range 0-255."),
-	OPT_WITH_CBARG("--avalonlc3-cinfo-asic",
-		     set_avalonlc3_asic_otp, NULL, &opt_set_avalonlc3_asic_otp,
-		     "Set Avalonlc3 cinfo asic index, range:[0, 25], step: 1"),
-	OPT_WITH_ARG("--avalonlc3-pid-p",
-		     set_int_0_to_9999, opt_show_intval, &opt_avalonlc3_pid_p,
-		     "Set Avalonlc3 pid-p, range 0-9999."),
-	OPT_WITH_ARG("--avalonlc3-pid-i",
-		     set_int_0_to_9999, opt_show_intval, &opt_avalonlc3_pid_i,
-		     "Set Avalonlc3 pid-i, range 0-9999."),
-	OPT_WITH_ARG("--avalonlc3-pid-d",
-		     set_int_0_to_9999, opt_show_intval, &opt_avalonlc3_pid_d,
-		     "Set Avalonlc3 pid-d, range 0-9999."),
+	OPT_WITH_ARG("--avalon8-spdlow",
+		     set_int_0_to_3, opt_show_intval, &opt_avalon8_spdlow,
+		     "Set Avalon8 spdlow, range 0-3."),
+	OPT_WITH_ARG("--avalon8-spdhigh",
+		     set_int_0_to_3, opt_show_intval, &opt_avalon8_spdhigh,
+		     "Set Avalon8 spdhigh, range 0-3."),
+	OPT_WITH_CBARG("--avalon8-cinfo-asic",
+		     set_avalon8_asic_otp, NULL, &opt_set_avalon8_asic_otp,
+		     "Set Avalon8 cinfo asic index, range:[0, 25], step: 1"),
+	OPT_WITH_ARG("--avalon8-pid-p",
+		     set_int_0_to_9999, opt_show_intval, &opt_avalon8_pid_p,
+		     "Set Avalon8 pid-p, range 0-9999."),
+	OPT_WITH_ARG("--avalon8-pid-i",
+		     set_int_0_to_9999, opt_show_intval, &opt_avalon8_pid_i,
+		     "Set Avalon8 pid-i, range 0-9999."),
+	OPT_WITH_ARG("--avalon8-pid-d",
+		     set_int_0_to_9999, opt_show_intval, &opt_avalon8_pid_d,
+		     "Set Avalon8 pid-d, range 0-9999."),
 #endif
 #ifdef USE_AVALON_MINER
 	OPT_WITH_CBARG("--avalonm-voltage",
@@ -2254,10 +2062,24 @@ static struct opt_table opt_config_table[] = {
                      opt_set_intval, opt_show_intval, &opt_bet_clk,
                      "Set Block Erupter clock"),
 #endif
+#ifdef USE_FLOW
+	OPT_WITH_ARG("--flow-serial",
+			 opt_set_charp, NULL, &opt_flow_serial,
+			 "Detect Flow Device by comma list of Serial Numbers"),
+	OPT_WITH_ARG("--flow-start-freq",
+		     set_int_0_to_9999, opt_show_intval, &opt_flow_start_freq,
+                     "Ramp start frequency MHz 25-500"),
+	OPT_WITH_ARG("--flow-step-freq",
+		     set_float_0_to_500, opt_show_intval, &opt_flow_step_freq,
+		     "Ramp frequency step MHz 1-100"),
+	OPT_WITH_ARG("--flow-tune",
+			set_int_0_to_9999, opt_show_intval, &opt_flow_tune,
+			"Tune up mine mins 30-9999, default 0=never"),
+#endif
 #ifdef USE_GEKKO
 	OPT_WITH_ARG("--gekko-serial",
 			 opt_set_charp, NULL, &opt_gekko_serial,
-			 "Detect GekkoScience Device by Serial Number"),
+			 "Detect GekkoScience Device by comma list of Serial Numbers"),
 	OPT_WITHOUT_ARG("--gekko-compac-detect",
 			 opt_set_bool, &opt_gekko_gsc_detect,
 			 "Detect GekkoScience Compac BM1384"),
@@ -2279,6 +2101,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--gekko-r909-detect",
 			 opt_set_bool, &opt_gekko_r909_detect,
 			 "Detect GekkoScience Terminus R909 BM1397"),
+	OPT_WITHOUT_ARG("--gekko-compaca1-detect",
+			 opt_set_bool, &opt_gekko_gsa1_detect,
+			 "Detect GekkoScience CompacF BM1397"),
+	OPT_WITHOUT_ARG("--gekko-kbox-detect",
+			 opt_set_bool, &opt_gekko_gsk_detect,
+			 "Detect GekkoScience KBox BFCLAR"),
 	OPT_WITHOUT_ARG("--gekko-noboost",
 			 opt_set_bool, &opt_gekko_noboost,
 			 "Disable GekkoScience NewPac/R606/CompacF AsicBoost"),
@@ -2318,6 +2146,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--gekko-r909-freq",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_r909_freq,
 		     "Set GekkoScience Terminus R909 BM1397 frequency in MHz, range 100-800"),
+	OPT_WITH_ARG("--gekko-compaca1-freq",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsa1_freq,
+		     "Set GekkoScience CompacA1 BM1362 frequency in MHz, range 100-800"),
+	OPT_WITH_ARG("--gekko-kbox-freq",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsk_freq,
+		     "Set GekkoScience KBox BFCLAR frequency in MHz, range 120-120"),
 	OPT_WITH_ARG("--gekko-start-freq",
 		     set_int_0_to_9999, opt_show_intval, &opt_gekko_start_freq,
                      "Ramp start frequency MHz 25-500"),
@@ -2332,6 +2166,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--gekko-tune2",
 			set_int_0_to_9999, opt_show_intval, &opt_gekko_tune2,
 			"Tune up mine2 mins 30-9999, default 0=never"),
+	OPT_WITH_ARG("--gekko-compaca1-start-freq",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsa1_start_freq,
+                     "Ramp CompacA1 start frequency MHz 100-800"),
+	OPT_WITH_ARG("--gekko-compaca1-corev",
+		     set_int_0_to_9999, opt_show_intval, &opt_gekko_gsa1_corev,
+                     "CompacA1 core millivolts 0-500"),
 #endif
 #ifdef HAVE_LIBCURL
 	OPT_WITH_ARG("--btc-address",
@@ -6474,7 +6314,7 @@ void zero_stats(void)
 	zero_bestshare();
 
 	for (i = 0; i < total_devices; ++i) {
-		struct cgpu_info *cgpu = get_devices(i);
+		struct cgpu_info *cgpu = get_a_device(i);
 
 		copy_time(&cgpu->dev_start_tv, &total_tv_start);
 
@@ -7683,11 +7523,26 @@ work = tq_pop(pool->stratum_q);
 		sshare->id = swork_id++;
 		mutex_unlock(&sshare_lock);
 
-		if (pool->vmask) {
+		if (work->direct_vmask)
+		{
+			unsigned char bvb[4], bvhex[12];
+			int v;
+			for (v = 0; v < 4; v++)
+				bvb[v] = work->data[v] & ~(work->base_bv[v]);
+			__bin2hex((char *)bvhex, bvb, 4);
+
+			snprintf(s, sizeof(s),
+				 "{\"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.submit\"}",
+				pool->rpc_user, work->job_id, nonce2hex, work->ntime, noncehex, bvhex, sshare->id);
+		}
+		else if (pool->vmask)
+		{
 			snprintf(s, sizeof(s),
 				 "{\"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.submit\"}",
 				pool->rpc_user, work->job_id, nonce2hex, work->ntime, noncehex, pool->vmask_002[work->micro_job_id], sshare->id);
-		} else {
+		}
+		else
+		{
 			snprintf(s, sizeof(s),
 				"{\"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.submit\"}",
 				pool->rpc_user, work->job_id, nonce2hex, work->ntime, noncehex, sshare->id);
@@ -7890,7 +7745,7 @@ retry_stratum:
 			bool ret = initiate_stratum(pool) && (!pool->extranonce_subscribe || subscribe_extranonce(pool)) && auth_stratum(pool);
 #else
 			bool ret = initiate_stratum(pool) && auth_stratum(pool);
-#endif
+
 			if (ret)
 				init_stratum_threads(pool);
 			else
@@ -9910,7 +9765,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			curses_print_status();
 			count = 0;
 			for (i = 0; i < total_devices; i++) {
-				cgpu = get_devices(i);
+				cgpu = get_a_device(i);
 #ifndef USE_USBUTILS
 				if (cgpu)
 #else
@@ -9920,7 +9775,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			}
 #ifdef USE_USBUTILS
 			for (i = 0; i < total_devices; i++) {
-				cgpu = get_devices(i);
+				cgpu = get_a_device(i);
 				if (cgpu && cgpu->usbinfo.nodev)
 					curses_print_devstatus(cgpu, i, count++);
 			}
@@ -9983,7 +9838,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 		}
 
 		for (i = 0; i < total_devices; ++i) {
-			struct cgpu_info *cgpu = get_devices(i);
+			struct cgpu_info *cgpu = get_a_device(i);
 			struct thr_info *thr = cgpu->thr[0];
 			enum dev_enable *denable;
 			char dev_str[8];
@@ -10111,7 +9966,7 @@ void print_summary(void)
 
 	applog(LOG_WARNING, "Summary of per device statistics:\n");
 	for (i = 0; i < total_devices; ++i) {
-		struct cgpu_info *cgpu = get_devices(i);
+		struct cgpu_info *cgpu = get_a_device(i);
 
 		cgpu->drv->get_statline_before = &blank_get_statline_before;
 		cgpu->drv->get_statline = &noop_get_statline;

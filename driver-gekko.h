@@ -1,6 +1,6 @@
 /*
+ * Copyright 2021-2025 kano
  * Copyright 2017-2021 vh
- * Copyright 2021-2023 kano
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -41,7 +41,7 @@ enum miner_state {
 	MINER_OPEN_CORE_OK,	// 6
 	MINER_MINING,		// 7
 	MINER_MINING_DUPS,	// 8
-	MINER_SHUTDOWN,	// 9
+	MINER_SHUTDOWN,		// 9
 	MINER_SHUTDOWN_OK,	// 10
 	MINER_RESET		// 11
 };
@@ -49,7 +49,9 @@ enum miner_state {
 enum miner_asic {
 	BM1384 = 1,
 	BM1387,
-	BM1397
+	BM1397,
+	BM1362,
+	BFCLAR
 };
 
 enum plateau_type {
@@ -113,7 +115,6 @@ struct GEKKOCHIP
 	int last;
 };
 
-
 struct ASIC_INFO {
 	struct timeval last_nonce;              // Last time nonce was found
 	float frequency;                        // Current frequency
@@ -152,8 +153,19 @@ struct COMPAC_NONCE
 #define LIMIT_NLIST_ITEMS 0
 
 // BM1397 info->job_id offsets to check (when job_id is wrong)
-static int cur_attempt[] = { 0, -4, -8, -12 };
-#define CUR_ATTEMPT (sizeof(cur_attempt)/sizeof(int))
+static int cur_attempt_1397[] = { 0, -4, -8, -12 };
+#define CUR_ATTEMPT_1397 (sizeof(cur_attempt_1397)/sizeof(int))
+
+// BM1362 info->job_id offsets to check (when current is wrong)
+// normally work is every ~2 seconds so usually no need to search back far
+static int cur_attempt_1362[] = { 0, -8, -16, -24 };
+#define CUR_ATTEMPT_1362 (sizeof(cur_attempt_1362)/sizeof(int))
+
+#define CUR_ATTEMPT_MAX (((CUR_ATTEMPT_1397)>(CUR_ATTEMPT_1362))?(CUR_ATTEMPT_1397):(CUR_ATTEMPT_1362))
+
+#define BVREQUIRED1362 (0x1fffe000)
+// BM1362 can roll the block header this many times per work item
+#define BVROLL1362 ((float)((BVREQUIRED1362) >> 13) / 256.0)
 
 // macro to adjust frequency choices to be an integer multple of info->freq_base
 #define FREQ_BASE(_f) (ceil((float)(_f) / info->freq_base) * info->freq_base)
@@ -173,9 +185,46 @@ static int cur_attempt[] = { 0, -4, -8, -12 };
 	0 : (int)floor((double)(_adr) \
 		/ floor((double)0x100 / (double)(_inf->chips))) )
 
+#define TELEM_VERSION(_info) (((_info)->telem_version) & 0xf0)
+#define TELEM_VALUE(_info) (((_info)->telem_version) & 0x0f)
+
+#define TELEM_IS_V1(_info) (TELEM_VERSION(_info) == 0x10)
+#define TELEM_IS_V2(_info) (TELEM_VERSION(_info) == 0x20)
+
+#define TELEM_VALID(_info) (TELEM_IS_V1(_info) || TELEM_IS_V2(_info))
+
 // BM1397 registers
 #define BM1397FREQ 0x08
 #define BM1397TICKET 0x14
+
+// BM1362 same as BM1397
+#define CHIPPY1362 CHIPPY1397
+#define TOCHIPPY1362 TOCHIPPY1397
+
+// BM1362 registers
+#define BM1362FREQ 0x08
+#define BM1362TICKET 0x14
+
+// BFCLAR (BFClarke) cmds LEN doesn't include 3:cmd len checksum
+#define BFCL_TASKWRITE 0x01
+#define BFCL_TASKWRITELEN 80
+#define BFCL_TASKSWITCH 0x02
+#define BFCL_TASKSWITCHLEN 1 // unused 00
+#define BFCL_READNONCES 0x04
+#define BFCL_READNONCESLEN 1 // unused 00
+#define BFCL_READNONCESREPLY (2+48)
+#define BFCL_SETCLOCK 0x08
+#define BFCL_SETCLOCKLEN 4
+#define BFCL_SETMASK 0x20
+#define BFCL_SETMASKLEN 4
+
+#define BFCL_RESULTRX 4
+#define BFCL_NONCERX 51
+
+// task/nonce bytes are all XORed
+#define BFCL_XOR 0xAA
+// shorthand for nonces
+#define BFCL_XOR4 0xAAAAAAAA
 
 #define GHNUM (60*5)
 #define GHOFF(n) (((n) + GHNUM) % GHNUM)
@@ -274,6 +323,7 @@ struct COMPAC_INFO {
 	struct thr_info *thr;		// Running Thread
 	struct thr_info rthr;		// Listening Thread
 	struct thr_info wthr;		// Miner Work Thread
+	struct thr_info tthr;		// Miner Telemetry Thread
 
 	pthread_mutex_t lock;		// Mutex
 	pthread_mutex_t wlock;		// Mutex Serialize Writes
@@ -286,6 +336,30 @@ struct COMPAC_INFO {
 	pthread_cond_t ncond;		// GSF wait
 	uint64_t ntimeout;		// GSF number of cond timeouts
 	uint64_t ntrigger;		// GSF number of cond tiggered
+
+	int telemetry;			// USB telemetry interface
+	int fail_telem;			// number of times init failed (reset will zero it)
+	bool has_telem;			// telemetry mcu is present and working
+	unsigned char telem_version;	// telemetry version
+	int telem_corev;		// last mV value set
+	float telem_temp;		// telemetry reported temp
+	float telem_temp_last;		// last valid telemetry reported temp
+	float telem_temp_max;		// max telemetry reported temp
+	struct timeval temp_maxt;	// time of max temp
+	float telem_vin;		// telemetry reported volt in
+	float telem_vout;		// telemetry reported volt out, per chip
+	float telem_iin;		// telemetry reported current in
+	float telem_iout;		// telemetry reported current out
+	float telem_temp2;		// unused so far in v1/v2
+	float telem_tach;		// telemetry reported fan tach
+	struct timeval last_telem;	// last telemetry
+	bool cooldown;			// running in cooldown mode
+	int cooldown_count;		// number of times in cooldown mode
+	bool set_new_corev;		// api request to change corev
+	int new_corev;			// api value specified
+	bool reg_state;			// telemetry regulator state
+	bool reg_want_off;		// telemetry regulator requested off (e.g. freq=0)
+	bool reg_want_on;		// telemetry regulator requested on (e.g. freq>0 and not cooldown)
 
 	float freq_mult;	     // frequency multiplier
 	float freq_base;	     // frequency mod value
@@ -313,7 +387,7 @@ struct COMPAC_INFO {
 	float freq_fail;	     // last freq set failure on BM1397
 	float hr_scale;		     // scale adjustment for hashrate
 
-	float micro_temp;            // Micro Reported Temp
+	float micro_temp;            // Micro Reported Temp C
 	float wait_factor0;          // Base setting from opt value
 	float wait_factor;           // Used to compute max_task_wait
 	bool lock_freq;		     // When true disable all but safety,reset,shutdown and API freq changes
@@ -404,7 +478,7 @@ struct COMPAC_INFO {
 
 	struct timeval first_task;
 	uint64_t tasks;
-	uint64_t cur_off[CUR_ATTEMPT];
+	uint64_t cur_off[CUR_ATTEMPT_MAX];
 	double work_usec_avg;
 	uint64_t work_usec_num;
 
@@ -420,6 +494,8 @@ struct COMPAC_INFO {
 	struct ASIC_INFO asics[255];
 	int64_t noncebyte[256];			// Count of nonces with the given byte[3] value
 	bool nb2c_setup;			// BM1397 true = nb2chip is setup (false = all 0)
+	bool gsk_work_sent;			// BFCLAR work was sent, so listen needs to send a read
+	bool gsk_read_sent;			// BFCLAR nonce read sent
 	uint16_t nb2chip[256];			// BM1397 map nonce byte to: chip that produced it
 	bool active_work[JOB_MAX+1];            // Tag good and stale work
 	struct work *work[JOB_MAX+1];           // Work ring buffer
@@ -456,10 +532,7 @@ struct COMPAC_INFO {
 	unsigned char cmd[BUFFER_MAX];          // Command transmit buffer
 	unsigned char rx[BUFFER_MAX];           // Receive buffer
 	unsigned char tx[BUFFER_MAX];           // Transmit buffer
+	unsigned char bf_spi[64];			// Bitfury SPI settings
+	uint16_t bf_bytes;			// Last BF SPI xfer bytes
 	unsigned char end[1024];                // buffer overrun test
 };
-
-void stuff_lsb(unsigned char *dst, uint32_t x);
-void stuff_msb(unsigned char *dst, uint32_t x);
-void stuff_reverse(unsigned char *dst, unsigned char *src, uint32_t len);
-uint64_t bound(uint64_t value, uint64_t lower_bound, uint64_t upper_bound);

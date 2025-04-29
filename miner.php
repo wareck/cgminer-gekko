@@ -1,9 +1,8 @@
 <?php
 #
-# v42.14
-# Copyright 2011-2018 Kano
-# Licensed under the GNU General Public License version 3,
-#  or (at your option) any later version.
+# v42.16
+# Copyright 2011-2024 Kano
+# Licensed under the GNU General Public License version 3
 #
 session_start();
 #
@@ -145,6 +144,79 @@ $s9acn = 63;
 # (or just completely ignore them and don't display the buttons)
 $allowcustompages = true;
 #
+# A bunch of useful functions for GEN
+#
+# >=1k -> 3 decimal + suffix
+function toSI($num)
+{
+ $num = (float)$num;
+ $suf = '';
+ if ($num >= 1.0e18)
+ {
+	$num /= 1.0e18;
+	$suf = 'E';
+ }
+ else if ($num >= 1.0e15)
+ {
+	$num /= 1.0e15;
+	$suf = 'P';
+ }
+ else if ($num >= 1.0e12)
+ {
+	$num /= 1.0e12;
+	$suf = 'T';
+ }
+ else if ($num >= 1.0e9)
+ {
+	$num /= 1.0e9;
+	$suf = 'G';
+ }
+ else if ($num >= 1.0e6)
+ {
+	$num /= 1.0e6;
+	$suf = 'M';
+ }
+ else if ($num >= 1.0e3)
+ {
+	$num /= 1.0e3;
+	$suf = 'k';
+ }
+ else
+	return $num;
+
+ return number_format($num, 3) . $suf;
+}
+#
+# M (10^6)
+function toM($num)
+{
+ return (float)$num / 1.0e6;
+}
+#
+# G (10^9)
+function toG($num)
+{
+ return (float)$num / 1.0e9;
+}
+#
+# T (10^12)
+function toT($num)
+{
+ return (float)$num / 1.0e12;
+}
+#
+# GH/s (10^9) hash rates are MH/s
+function HtoG($num)
+{
+ return (float)$num / 1000.0;
+}
+#
+# TH/s (10^12) hash rates are MH/s
+function HtoT($num)
+{
+ return (float)$num / 1.0e6;
+}
+#
 # OK this is a bit more complex item: Custom Summary Pages
 # As mentioned above, see API-README
 # see the example below (if there is no matching data, no total will show)
@@ -219,8 +291,8 @@ $avalonext = array(
   'group' => array('Current Block Hash', 'Network Difficulty'),
   'calc' => array('Current Block Time' => 'min')),
  'SUMMARY' => array(
-  'gen' => array('THS av' => 'MHS av / 1000000.0',
-		'THS 5m' => 'MHS 5m / 1000000.0')),
+  'gen' => array('THS av' => 'HtoT(MHS av)',
+		'THS 5m' => 'HtoT(MHS 5m)')),
  'MM' => array(
   'gen' => array('AVATHS' => 'GHSmm / 1000.0'))
 );
@@ -554,9 +626,9 @@ $kanogenext = array(
 			'SUMMARY.Elapsed * SUMMARY.Work Utility / 60 / '.
 				'COIN.Network Difficulty',
 		'THS av' =>
-			'SUMMARY.MHS av / 1000000.0',
+			'HtoT(SUMMARY.MHS av)',
 		'THS 5m' =>
-			'SUMMARY.MHS 5m / 1000000.0',
+			'HtoT(SUMMARY.MHS 5m)',
 		'THS WU' =>
 			'round(pow(2,32) * SUMMARY.Work Utility / 60 / '.
 				'10000000 ) / 100000')),
@@ -569,6 +641,197 @@ $kanogenext = array(
 				'max(1,Difficulty Accepted+Difficulty Rejected)',
 		'Acc' => 'Difficulty Accepted / '.
 				'max(1,Difficulty Accepted+Difficulty Rejected)'))
+);
+#
+$gekkopage = array(
+ 'DATE' => null,
+ 'RIGS' => null,
+ 'SUMMARY+COIN' => array('SUMMARY.Elapsed=Elapsed',
+			'GEN.GHS av=GH/s av||SUMMARY.MHS av=MHS av',
+			'GEN.GHS 5m=GH/s 5m||SUMMARY.MHS 5m=MHS 5m',
+			'GEN.DAM=DiffAcc M||SUMMARY.Difficulty Accepted=DiffAcc',
+			'SUMMARY.Pool Rejected%=DiffRej %',
+			'SUMMARY.Network Blocks=NetBlks',
+			'GEN.SIND=NetDiff||COIN.Network Difficulty=NetDiff',
+			'GEN.SIBest=Best||SUMMARY.Best Share=Best',
+			'SUMMARY.Found Blocks=Found'),
+ 'EDEVS+NOTIFY' => array('EDEVS.Name=Name', 'EDEVS.ID=ID', 'EDEVS.Status=Status',
+			'GEN.GHS av=GH/s av||EDEVS.MHS av=MHS av',
+			'GEN.GHS 5m=GH/s 5m||EDEVS.MHS 5m=MHS 5m',
+			'GEN.DAM=DiffAcc M||EDEVS.Difficulty Accepted=DiffAcc',
+			'EDEVS.Device Rejected%=DiffRej %',
+			'EDEVS.Hardware Errors=DiffHW',
+			'NOTIFY.Last Not Well=Not Well'),
+ 'POOL' => array('Stratum URL=Pool', 'Status',
+			'GEN.DAM=DiffAcc M||Difficulty Accepted=DiffAcc',
+			'Pool Rejected%=DiffRej %',
+			'Last Share Time=Last Share',
+			'GEN.SIBest=Best||Best Share=Best')
+);
+$gekkosum = array(
+ 'SUMMARY+COIN' => array('GEN.GHS av', 'GEN.GHS 5m',
+			'SUMMARY.MHS av', 'SUMMARY.MHS 5m',
+			'GEN.DAM', 'SUMMARY.Difficulty Accepted'),
+ 'POOL' => array('GEN.DAM', 'Difficulty Accepted')
+);
+$gekkoext = array(
+ 'SUMMARY+COIN' => array(
+  'gen' => array('GHS av' => 'HtoG(SUMMARY.MHS av)',
+		'GHS 5m' => 'HtoG(SUMMARY.MHS 5m)',
+		'DAM' => 'toM(SUMMARY.Difficulty Accepted)',
+		'SIND' => 'toSI(COIN.Network Difficulty)',
+		'SIBest' => 'toSI(SUMMARY.Best Share)')),
+ 'EDEVS+NOTIFY' => array(
+  'gen' => array('GHS av' => 'HtoG(EDEVS.MHS av)',
+		'GHS 5m' => 'HtoG(EDEVS.MHS 5m)',
+		'DAM' => 'toM(EDEVS.Difficulty Accepted)')),
+ 'POOL' => array(
+  'gen' => array('DAM' => 'toM(Difficulty Accepted)',
+		'SIBest' => 'toSI(Best Share)'))
+
+);
+#
+# Split each gekko estats line into one per chip with chip specific data
+function gekkochipestats($data)
+{
+ $data2 = array();
+ foreach ($data as $n => $res)
+ {
+	$ar = array();
+	$num = 0;
+	foreach ($res as $name => $values)
+	{
+		// e.g. STATUS
+		if (substr($name, 0, 5) != 'STATS')
+		{
+			$ar[$name] = $values;
+			continue;
+		}
+
+		// most likely not a gekko miner
+		if (!isset($values['Chips']) || !isset($values['Chip0FreqReply']))
+		{
+			$values['STATS'] = $num;
+			$ar['STATS'.$num] = $values;
+			$num++;
+			continue;
+		}
+
+		$chips = $values['Chips'];
+		for ($i = 0; $i < $chips; $i++)
+		{
+			$values['STATS'] = $num;
+			if ($i != 0)
+			{
+				$values['GHGHs'] = '';
+				$values['Serial'] = '';
+			}
+			$values['Chip'] = $i;
+
+			if (isset($values['Chip'.$i.'Nonces']))
+				$values['ChipNonces'] = $values['Chip'.$i.'Nonces'];
+			else
+				$values['ChipNonces'] = '';
+			if (isset($values['Chip'.$i.'Dups']))
+				$values['ChipDups'] = $values['Chip'.$i.'Dups'];
+			else
+				$values['ChipDups'] = '';
+			if (isset($values['Chip'.$i.'Ranges']))
+				$values['ChipRanges'] = $values['Chip'.$i.'Ranges'];
+			else
+				$values['ChipRanges'] = '';
+
+			$cr = explode('/', $values['ChipRanges']);
+			if (count($cr) > 6)
+				$values['ChipRangeTotal'] = $cr[6];
+			else
+				$values['ChipRangeTotal'] = '';
+			if (count($cr) > 7)
+				$values['ChipRangePercent'] = $cr[7];
+			else
+				$values['ChipRangePercent'] = '';
+			
+			$values['ChipFreqSend'] = $values['Chip'.$i.'FreqSend'];
+			$values['ChipFreqReply'] = $values['Chip'.$i.'FreqReply'];
+
+			$ar['STATS'.$num] = $values;
+			$num++;
+		}
+	}
+	$data2[$n] = $ar;
+ }
+ return $data2;
+}
+#
+function gekkochipfmt($section, $name, $value, $when, $alldata, $warnclass,
+			$errorclass, $hiclass, $loclass, $totclass)
+{
+ $ret = $value;
+ $class = '';
+ if ($section == 'total')
+	 return array($ret, $class);
+ switch($name)
+ {
+  case 'GHGHs':
+	if ($value == 0)
+		$ret = ' ';
+	else
+		$ret = number_format(floatval($value), 2);
+	break;
+  case 'ChipFreqSend':
+	if ($value == 0)
+	{
+		$class = $warnclass;
+		$ret = 0;
+	}
+	else
+		$ret = number_format(floatval($value), 2);
+	break;
+  case 'ChipRangePercent':
+	if ($value == '0.00%')
+		$ret = ' ';
+	break;
+  case 'Temp':
+	if ($value == '-999')
+		$ret = ' ';
+	else
+		$ret = number_format(floatval($value), 2);
+	break;
+ }
+ return array($ret, $class);
+}
+#
+$gekkochipspage = array(
+ 'DATE' => null,
+ 'RIGS' => null,
+ 'ESTATS' => array('ID', 'Serial', 'Temp=TempC', 'GHGHs', 'Chip', 'ChipNonces=Nonces',
+			'ChipDups=Dups', 'ChipFreqSend=Freq MHz',
+			'ChipRangeTotal=Work', 'ChipRangePercent=Work%'
+			),
+ 'SUMMARY+COIN' => array('SUMMARY.Elapsed=Elapsed',
+			'GEN.GHS av=GH/s av||SUMMARY.MHS av=MHS av',
+			'GEN.GHS 5m=GH/s 5m||SUMMARY.MHS 5m=MHS 5m',
+			'GEN.DAM=DiffAcc M||SUMMARY.Difficulty Accepted=DiffAcc',
+			'SUMMARY.Pool Rejected%=DiffRej %',
+			'SUMMARY.Network Blocks=NetBlks',
+			'GEN.SIND=NetDiff||COIN.Network Difficulty=NetDiff',
+			'GEN.SIBest=Best||SUMMARY.Best Share=Best',
+			'SUMMARY.Found Blocks=Found')
+);
+$gekkochipssum = array(
+ 'SUMMARY+COIN' => array('GEN.GHS av', 'GEN.GHS 5m',
+			'SUMMARY.MHS av', 'SUMMARY.MHS 5m',
+			'GEN.DAM', 'SUMMARY.Difficulty Accepted')
+);
+$gekkochipsext = array(
+ 'ESTATS' => array('xgen' => 'gekkochipestats',
+		'fmt' => 'gekkochipfmt'),
+ 'SUMMARY+COIN' => array(
+  'gen' => array('GHS av' => 'HtoG(SUMMARY.MHS av)',
+		'GHS 5m' => 'HtoG(SUMMARY.MHS 5m)',
+		'DAM' => 'toM(SUMMARY.Difficulty Accepted)',
+		'SIND' => 'toSI(COIN.Network Difficulty)',
+		'SIBest' => 'toSI(SUMMARY.Best Share)'))
 );
 #
 $syspage = array(
@@ -621,6 +884,8 @@ $syssum = array(
 # and it can be a fully defined 'Name' => array(...) like in $sys_pages below
 $customsummarypages = array(
  'Kano' => 1,
+ 'Gekko' => 1,
+ 'GekkoChips' => 1,
  'Mobile' => 1,
  'Stats' => 1,
  'Avalon' => 1,
@@ -745,6 +1010,8 @@ $sys_pages = array(
  'DevDet' => array($devdetpage, $devdetsum),
  'Proto' => array($protopage, $protosum, $protoext),
  'Kano' => array($kanogenpage, $kanogensum, $kanogenext),
+ 'Gekko' => array($gekkopage, $gekkosum, $gekkoext),
+ 'GekkoChips' => array($gekkochipspage, $gekkochipssum, $gekkochipsext),
  'Summary' => array($syspage, $syssum)
 );
 #
@@ -1995,6 +2262,10 @@ function fmt($section, $name, $value, $when, $alldata, $cf = NULL)
 			$ret = number_format((float)$value, 2);
 		if ($value == 0)
 			$class = $warnclass;
+		break;
+	case 'DAM':
+		if ($value != '')
+			$ret = number_format((float)$value, 3);
 		break;
 	}
  }
@@ -3444,7 +3715,12 @@ function processcustompage($pagename, $sections, $sum, $ext, $namemap)
 			else
 				$cf = NULL;
 
-			$rigresults = processext($ext, $section, $results[$sectionmap[$sec]], $fields);
+			$newres = processext($ext, $section, $results[$sectionmap[$sec]], $fields);
+
+			if (isset($ext[$section]['xgen']))
+				$rigresults = $ext[$section]['xgen']($newres);
+			else
+				$rigresults = $newres;
 
 			$showfields = array();
 			$showhead = array();

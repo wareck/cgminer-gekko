@@ -8,7 +8,7 @@
  */
 
 /* Compile:
- *   gcc api-example.c -o cgminer-api
+ *   gcc api-example.c -Icompat/jansson-2.9/src -o cgminer-api
  */
 
 #include "config.h"
