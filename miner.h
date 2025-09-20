@@ -1084,6 +1084,7 @@ extern bool opt_gekko_gsi_detect;
 extern bool opt_gekko_gsf_detect;
 extern bool opt_gekko_r909_detect;
 extern bool opt_gekko_gsa1_detect;
+extern bool opt_gekko_gsa2_detect;
 extern bool opt_gekko_gsk_detect;
 extern float opt_gekko_gsc_freq;
 extern float opt_gekko_gsd_freq;
@@ -1098,13 +1099,16 @@ extern int opt_gekko_gsi_freq;
 extern int opt_gekko_gsf_freq;
 extern int opt_gekko_r909_freq;
 extern int opt_gekko_gsa1_freq;
+extern int opt_gekko_gsa2_freq;
 extern int opt_gekko_gsk_freq;
 extern int opt_gekko_gsh_vcore;
 extern int opt_gekko_start_freq;
 extern int opt_gekko_step_delay;
 extern int opt_gekko_tune2;
 extern int opt_gekko_gsa1_start_freq;
+extern int opt_gekko_gsa2_start_freq;
 extern int opt_gekko_gsa1_corev;
+extern int opt_gekko_gsa2_corev;
 #endif
 #ifdef USE_KLONDIKE
 extern char *opt_klondike_options;
@@ -1170,6 +1174,7 @@ extern char *opt_usb_select;
 extern int opt_usbdump;
 extern bool opt_usb_list_all;
 extern cgsem_t usb_resource_sem;
+extern int libusb_ign_tmo;
 #endif
 #ifdef USE_BITFORCE
 extern bool opt_bfl_noncerange;

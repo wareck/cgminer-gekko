@@ -4,8 +4,8 @@
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 3 of the License, or (at your option)
- * any later version.  See COPYING for more details.
+ * Software Foundation; version 3 of the License.
+ * See COPYING for more details.
  */
 
 #include "math.h"
@@ -43,7 +43,8 @@ enum miner_state {
 	MINER_MINING_DUPS,	// 8
 	MINER_SHUTDOWN,		// 9
 	MINER_SHUTDOWN_OK,	// 10
-	MINER_RESET		// 11
+	MINER_RESET,		// 11
+	MINER_REINIT		// 12
 };
 
 enum miner_asic {
@@ -51,6 +52,7 @@ enum miner_asic {
 	BM1387,
 	BM1397,
 	BM1362,
+	BM1370,
 	BFCLAR
 };
 
@@ -160,12 +162,22 @@ static int cur_attempt_1397[] = { 0, -4, -8, -12 };
 // normally work is every ~2 seconds so usually no need to search back far
 static int cur_attempt_1362[] = { 0, -8, -16, -24 };
 #define CUR_ATTEMPT_1362 (sizeof(cur_attempt_1362)/sizeof(int))
-
-#define CUR_ATTEMPT_MAX (((CUR_ATTEMPT_1397)>(CUR_ATTEMPT_1362))?(CUR_ATTEMPT_1397):(CUR_ATTEMPT_1362))
+#define JOBID_1362 0xf8
 
 #define BVREQUIRED1362 (0x1fffe000)
 // BM1362 can roll the block header this many times per work item
 #define BVROLL1362 ((float)((BVREQUIRED1362) >> 13) / 256.0)
+
+static int cur_attempt_1370[] = { 0, -24, -48, -72 };
+#define CUR_ATTEMPT_1370 (sizeof(cur_attempt_1370)/sizeof(int))
+#define JOBID_1370 0xf0
+
+#define BVREQUIRED1370 BVREQUIRED1362
+#define BVROLL1370 BVROLL1362
+
+#define TMAX(a,b,c) ((a) > (b) ? ((a)>(c)?(a):(c)) : ((b)>(c)?(b):(c)))
+
+#define CUR_ATTEMPT_MAX TMAX(CUR_ATTEMPT_1397,CUR_ATTEMPT_1362,CUR_ATTEMPT_1370)
 
 // macro to adjust frequency choices to be an integer multple of info->freq_base
 #define FREQ_BASE(_f) (ceil((float)(_f) / info->freq_base) * info->freq_base)
@@ -190,6 +202,8 @@ static int cur_attempt_1362[] = { 0, -8, -16, -24 };
 
 #define TELEM_IS_V1(_info) (TELEM_VERSION(_info) == 0x10)
 #define TELEM_IS_V2(_info) (TELEM_VERSION(_info) == 0x20)
+#define TELEM_IS_V2_1(_info) ((TELEM_VERSION(_info) == 0x20) \
+				&& (TELEM_VALUE(_info) == 0x01))
 
 #define TELEM_VALID(_info) (TELEM_IS_V1(_info) || TELEM_IS_V2(_info))
 
@@ -198,12 +212,20 @@ static int cur_attempt_1362[] = { 0, -8, -16, -24 };
 #define BM1397TICKET 0x14
 
 // BM1362 same as BM1397
-#define CHIPPY1362 CHIPPY1397
-#define TOCHIPPY1362 TOCHIPPY1397
+#define CHIPPY1362(_i,_c) CHIPPY1397(_i,_c)
+#define TOCHIPPY1362(_i,_a) TOCHIPPY1397(_i,_a)
+
+// BM1370 same as BM1362
+#define CHIPPY1370(_i,_c) CHIPPY1362(_i,_c)
+#define TOCHIPPY1370(_i,_a) TOCHIPPY1362(_i,_a)
 
 // BM1362 registers
 #define BM1362FREQ 0x08
 #define BM1362TICKET 0x14
+
+// BM1370 registers
+#define BM1370FREQ 0x08
+#define BM1370TICKET 0x14
 
 // BFCLAR (BFClarke) cmds LEN doesn't include 3:cmd len checksum
 #define BFCL_TASKWRITE 0x01
@@ -342,6 +364,7 @@ struct COMPAC_INFO {
 	bool has_telem;			// telemetry mcu is present and working
 	unsigned char telem_version;	// telemetry version
 	int telem_corev;		// last mV value set
+	int telem_corev_def;		// default corev
 	float telem_temp;		// telemetry reported temp
 	float telem_temp_last;		// last valid telemetry reported temp
 	float telem_temp_max;		// max telemetry reported temp
@@ -350,13 +373,15 @@ struct COMPAC_INFO {
 	float telem_vout;		// telemetry reported volt out, per chip
 	float telem_iin;		// telemetry reported current in
 	float telem_iout;		// telemetry reported current out
-	float telem_temp2;		// unused so far in v1/v2
+	float telem_temp2;		// v2.1
 	float telem_tach;		// telemetry reported fan tach
 	struct timeval last_telem;	// last telemetry
 	bool cooldown;			// running in cooldown mode
 	int cooldown_count;		// number of times in cooldown mode
 	bool set_new_corev;		// api request to change corev
-	int new_corev;			// api value specified
+	int new_corev;			// api corev value specified
+	bool set_new_fan;		// api request to change fan rpm %
+	int new_fan;			// api fan rpm % value specified
 	bool reg_state;			// telemetry regulator state
 	bool reg_want_off;		// telemetry regulator requested off (e.g. freq=0)
 	bool reg_want_on;		// telemetry regulator requested on (e.g. freq>0 and not cooldown)
